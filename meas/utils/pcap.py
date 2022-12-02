@@ -23,7 +23,7 @@ with open(file_name) as file:
 for i in name:
     try:
         subprocess.check_output(["docker", "exec", i, "pkill", "tcpdump"])
-        cmd_rslt = subprocess.check_output(["docker", "exec", i, "ls", "/tmp"])
+        cmd_rslt = subprocess.check_output(["docker", "exec", i, "ls", "/var"])
         cmd_rslt = cmd_rslt.decode().strip().split('\n')  
         sampling = []; key = ".pcap"
         try:
@@ -31,7 +31,7 @@ for i in name:
                 if key in j:
                     sampling.append(j)
             for k in sampling:
-                subprocess.check_output(["docker", "cp", i + ":/tmp/" + k, pcap_dir + k])
+                subprocess.check_output(["docker", "cp", i + ":/var/" + k, pcap_dir + k])
         except:
             print("Error")
     except:
