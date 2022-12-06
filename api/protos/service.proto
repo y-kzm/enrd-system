@@ -4,80 +4,62 @@ package api;
 
 option go_package = "github.com/y-kzm/enrd-system/api";
 
-import "google/protobuf/timestamp.proto";
+// import "google/protobuf/timestamp.proto";
 
-/**
- * Define service
- */
+
 service Service {
-  rpc Configure (ConfigureRequest) returns (ConfigureResponse);
-  rpc Measure (MeasureRequest) returns (MeasureResponse);
+    rpc Configure (ConfigureRequest) returns (ConfigureResponse);
+    rpc Measure (MeasureRequest) returns (MeasureResponse);
 }
 
-/**
- * Configure messages
- */
+
+
 message ConfigureRequest {
-    repeated IprouteInfo iproute_info = 1;
+    string msg = 1;
     repeated SRInfo sr_info = 2;
 }
 
 message ConfigureResponse {
-    google.protobuf.Timestamp time = 1;
-    oneof code {
-        string ok = 2;
-        string error = 3;
-    } 
+    enum Status {
+        OK = 0;
+        ERROR = 1;
+        // ..._
+    } Status status = 1;
+    string msg = 2;
 }
 
-/*
- * Measure messages
- */
+
 message MeasureRequest {
-    enum Method {
-        IGI = 0;
-        PTR = 1;
-        // ...
-    }
-    Method method = 1;
-    oneof param {
-        IgiPtrParam igiptr_param = 2;
-        // ...
-    }
+    string method = 1;
+    Param param = 2;
 }
 
 message MeasureResponse {
-    repeated Result result = 1;
+    enum Status {
+        OK = 0;
+        ERROR = 1;
+        // ..._
+    } Status status = 1;
+    string msg = 2;
 }
 
-/*
- * Sub messages
- */ 
-message IprouteInfo {
-    string ipv6_addr = 1;
-    int32 vrf = 2;
-}
 
 message SRInfo {
     string src_addr = 1;
-    string dst_addr = 2;
-    enum SegFunc { 
-        H_ENCAP = 0;
-        H_INSERT = 1;
-        // ...
-    } 
-    SegFunc seg_func = 3;
+    int32 vrf = 2;
+    string dst_addr = 3;
     repeated string sid_list = 4;
 }
 
-message IgiPtrParam {
-    int32 probe_num = 1;
+message Param {
+    int32 packet_num = 1;
     int32 packet_size = 2;
     int32 repeat_num = 3;
+    int32 meas_num = 4;
+    int32 sma_interval = 5;
 }
 
-message Result {
-    double meas_res = 1;
-    repeated string sid_list = 2;  // Represents the measurement path
-    google.protobuf.Timestamp time = 3; 
-}
+
+
+
+
