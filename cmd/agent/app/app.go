@@ -1,42 +1,79 @@
 package app
 
 import (
-	"context"
+	"database/sql"
+	"log"
+	"net"
 
-	"github.com/y-kzm/enrd-system/api"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/vishvananda/netlink"
+	"github.com/vishvananda/netlink/nl"
 )
 
-type Server struct {
-	api.UnimplementedServiceServer
+const database = "root:0ta29SourC3@tcp(127.0.0.1:3306)/enrd"
+
+// Connection test to DB
+func ConnectToDB() {
+	db, err := sql.Open("mysql", database)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		var version string
+		db.QueryRow("SELECT VERSION()").Scan(&version)
+		log.Println("DB Version: ", version)
+	}
 }
 
-// Recieve Configure message
-func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.ConfigureResponse, error) {
-	if in.Msg == "go" {
-		return &api.ConfigureResponse{
-			Status: 0,
-			Msg:    "OK!!!",
-		}, nil
-	} else {
-		return &api.ConfigureResponse{
-			Status: 1,
-			Msg:    "NG...",
-		}, nil
+// Assignment of SID
+func AssignSID(sid string) {
+	lo, err := netlink.LinkByName("lo")
+	if err != nil {
+		log.Fatal(err)
+	}
+	addr, err := netlink.ParseAddr(sid)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = netlink.AddrAdd(lo, addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Add End route
+func SEG6LocalRouteEndAdd(dst string, dev string) {
+	li, err := netlink.LinkByName(dev)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-}
+	dstIP, dstIPnet, err := net.ParseCIDR(dst)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// Recieve Measure message
-func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.MeasureResponse, error) {
-	if in.Method == "ptr" {
-		return &api.MeasureResponse{
-			Status: 0,
-			Msg:    "OK!!!",
-		}, nil
-	} else {
-		return &api.MeasureResponse{
-			Status: 1,
-			Msg:    "NG...",
-		}, nil
+	var flags_end [nl.SEG6_LOCAL_MAX]bool
+	flags_end[nl.SEG6_LOCAL_ACTION] = true
+	e := &netlink.SEG6LocalEncap{
+		Flags:  flags_end,
+		Action: nl.SEG6_LOCAL_ACTION_END,
+	}
+	route := netlink.Route{
+		LinkIndex: li.Attrs().Index,
+		Dst: &net.IPNet{
+			IP:   dstIP,
+			Mask: dstIPnet.Mask,
+		},
+		Encap: e,
+	}
+
+	if err := netlink.RouteAdd(&route); err != nil {
+		log.Fatal(err)
 	}
 }

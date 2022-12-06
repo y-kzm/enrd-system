@@ -1,49 +1,40 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql"
 	"google.golang.org/grpc"
 
 	"github.com/y-kzm/enrd-system/api"
+	procedure "github.com/y-kzm/enrd-system/cmd/agent/api"
 	"github.com/y-kzm/enrd-system/cmd/agent/app"
 	tool "github.com/y-kzm/enrd-system/pkg/tool/server"
 )
 
-const database = "root:0ta29SourC3@tcp(127.0.0.1:3306)/enrd"
 const port = 52000
 
 func main() {
 	if len(os.Args) != 3 {
+		fmt.Fprintf(os.Stderr, "Usage: ./agent [NIC] [SID]")
 		log.Fatalf("Argument error: %#v", os.Args)
 	}
 	log.Println("NIC: %s SID: %s", os.Args[1], os.Args[2])
 
-	// TODO: 指定のNICが存在するかどうかチェック
-	// TODO: SIDがIPv6形式かどうかチェック
-
-	// Connect to db
-	db, err := sql.Open("mysql", database)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// Check connectivity to DB
-	var version string
-	db.QueryRow("SELECT VERSION()").Scan(&version)
-	log.Println("DB Version: ", version)
+	// Connect to database
+	app.ConnectToDB()
 
 	// TODO: クリーン処理
+	// 1. 不要なLoopbackアドレスを削除
+	// 2. 指定SID宛のルートを削除
 
-	// TODO: SID付与，End設定
+	// Assign SID, Add End route
+	app.AssignSID(os.Args[2])
+	app.SEG6LocalRouteEndAdd(os.Args[2], os.Args[1])
 
-	// TODO: IGI/PTR serverの起動
+	// Start IGI/PTR server
 	go tool.EstimateServer()
 	log.Print("Start IGI/PTR server")
 
@@ -53,10 +44,9 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	api.RegisterServiceServer(s, &app.Server{})
+	api.RegisterServiceServer(s, &procedure.Server{})
 	log.Printf("Server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
-
 }
