@@ -1,6 +1,7 @@
 #preinit:
 #  - cmds:
-#    - cmd: docker build -t yykzm/ubuntu:20.04-controller .
+#    - cmd: make build-controller
+#    - cmd: make build-agent
 
 # TODO: controllerにはmysqlを入れる
 # TODO: v4アドレス付与する
@@ -47,6 +48,12 @@ node_configs:
       - cmd: ip route add fc00:2::/64 via fd00:0:172:16:4::11 
       - cmd: ip route add fc00:3::/64 via fd00:0:172:16:4::12 
       - cmd: ip route add fc00:4::/64 via fd00:0:172:16:5::11 
+
+      - cmd: service start mysql
+      - cmd: mysql_secure_installation
+      # MariaDB [(none)]> CREATE DATABASE enrd;
+      # MariaDB [(none)]> GRANT ALL PRIVILEGES ON enrd.* TO 'enrd'@'localhost' IDENTIFIED BY 'password';
+      # MariaDB [(none)]> GRANT ALL PRIVILEGES ON enrd.* TO 'enrd'@'%' IDENTIFIED BY 'password';
 
   - name: Com1
     cmds:
