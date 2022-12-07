@@ -11,14 +11,14 @@ rmi:
 	docker rmi $(IMG_CONTROLLER)
 	docker rmi $(IMG_AGENT)
 
-go-build-controller:
-	go build -o controller cmd/controller/main.go
+controller:
+	go build -o ./bin/controller cmd/controller/main.go
 
-go-build-agent:
-	go build -o agent cmd/agent/main.go
+agent:
+	go build -o ./bin/agent cmd/agent/main.go
 
 rm:
-	rm controller agent
+	rm -rf ./bin
 
 protoc:
 	protoc --go_out=./api --go_opt=paths=source_relative --go-grpc_out=./api --go-grpc_opt=paths=source_relative --proto_path=./api/protos ./api/protos/*.proto	
