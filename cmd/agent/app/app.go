@@ -10,7 +10,7 @@ import (
 	"github.com/vishvananda/netlink/nl"
 )
 
-const database = "root:0ta29SourC3@tcp(127.0.0.1:3306)/enrd"
+const database = "enrd:0ta29SourC3@tcp(10.0.0.243:3306)/enrd"
 
 // Connection test to DB
 func ConnectToDB() {
@@ -45,6 +45,12 @@ func AssignSID(sid string) {
 		log.Fatal(err)
 	}
 }
+
+// TODO: Remove unwanted loopback addresses
+// func RemoveSID()
+
+// TODO: Delete routes to the specified SID
+// func RouteDel()
 
 // Add End route
 func SEG6LocalRouteEndAdd(dst string, dev string) {

@@ -1,0 +1,10 @@
+# Estimete Parameter
+params:
+    method: ptr
+    packet_num: 60
+    packet_size: 700
+    repeat_num: 20
+    # Number of measurements per time
+    meas_num: 3
+    # Simple moving average interval
+    sma_interval: 3

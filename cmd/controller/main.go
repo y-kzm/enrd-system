@@ -40,25 +40,3 @@ func newApp() *cli.App {
 	app.Commands = commands.Commands
 	return app
 }
-
-/*
-func main() {
-	argv := os.Args
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("Did not connect: %v", err)
-	}
-	defer conn.Close()
-	c := api.NewServiceClient(conn)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	r, err := c.Measure(ctx, &api.MeasureRequest{
-		Method: argv[1],
-	})
-	if err != nil {
-		log.Fatalf("Could not echo: %v", err)
-	}
-	log.Printf("Received from server: %d %s", r.GetStatus(), r.GetMsg())
-}
-*/

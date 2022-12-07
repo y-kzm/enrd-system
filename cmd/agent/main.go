@@ -18,13 +18,14 @@ const port = 52000
 
 func main() {
 	if len(os.Args) != 3 {
-		fmt.Fprintf(os.Stderr, "Usage: ./agent [NIC] [SID]")
+		fmt.Fprintf(os.Stderr, "Usage: ./agent [NIC] [SID]\n")
 		log.Fatalf("Argument error: %#v", os.Args)
 	}
 	log.Println("NIC: %s SID: %s", os.Args[1], os.Args[2])
 
 	// Connect to database
 	app.ConnectToDB()
+	log.Print("Successful DB connection")
 
 	// TODO: クリーン処理
 	// 1. 不要なLoopbackアドレスを削除
@@ -32,7 +33,9 @@ func main() {
 
 	// Assign SID, Add End route
 	app.AssignSID(os.Args[2])
+	log.Print("Successful assign SID")
 	app.SEG6LocalRouteEndAdd(os.Args[2], os.Args[1])
+	log.Print("Successful add End route")
 
 	// Start IGI/PTR server
 	go tool.EstimateServer()
