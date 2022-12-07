@@ -21,11 +21,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Usage: ./agent [NIC] [SID]\n")
 		log.Fatalf("Argument error: %#v", os.Args)
 	}
-	log.Println("NIC: %s SID: %s", os.Args[1], os.Args[2])
+	log.Printf("NIC: %s SID: %s", os.Args[1], os.Args[2])
 
 	// Connect to database
 	app.ConnectToDB()
-	log.Print("Successful DB connection")
 
 	// TODO: クリーン処理
 	// 1. 不要なLoopbackアドレスを削除
