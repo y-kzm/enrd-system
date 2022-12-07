@@ -17,7 +17,7 @@ import (
 	"github.com/y-kzm/enrd-system/pkg/shell"
 )
 
-const port = 5200
+const port = 52000
 
 func LoadCfgStruct(c *cli.Context, filename string) (erconfig shell.ErConfig, erparam shell.ErParam, err error) {
 	cfgFile := c.String(filename)
@@ -47,8 +47,8 @@ func LoadCfgStruct(c *cli.Context, filename string) (erconfig shell.ErConfig, er
 
 func CmdTemp(c *cli.Context) error {
 	// TODO: viperでパスに依存しない形にする
-	PrintTemplate("config_template.yaml")
-	PrintTemplate("param_template.yaml")
+	PrintTemplate("config.yaml")
+	PrintTemplate("param.yaml")
 
 	return nil
 }
@@ -96,7 +96,7 @@ func CmdEstimate(c *cli.Context) error {
 
 func PrintTemplate(filename string) {
 	fmt.Print("------------------- " + filename + "\n")
-	f, err := os.Open("./configs/" + filename)
+	f, err := os.Open("./templates/" + filename)
 	if err != nil {
 		log.Fatal(err)
 	}
