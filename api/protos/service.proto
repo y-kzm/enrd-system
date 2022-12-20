@@ -49,6 +49,7 @@ message SRInfo {
     int32 vrf = 2;
     string dst_addr = 3;
     repeated string sid_list = 4;
+    string table_name = 5;
 }
 
 message Param {

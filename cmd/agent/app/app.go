@@ -10,7 +10,7 @@ import (
 	"github.com/vishvananda/netlink/nl"
 )
 
-const database = "enrd:0ta29SourC3@tcp(10.0.0.243:3306)/enrd"
+const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
 
 // Connection test to DB
 func ConnectToDB() {
