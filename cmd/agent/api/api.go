@@ -14,6 +14,7 @@ type Server struct {
 // Recieve Configure message
 func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.ConfigureResponse, error) {
 	log.Printf("Called Configure()")
+	log.Print(in.SrInfo)
 	if in.Msg == "go" {
 		return &api.ConfigureResponse{
 			Status: 0,

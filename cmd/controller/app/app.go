@@ -21,6 +21,8 @@ import (
 	"github.com/y-kzm/enrd-system/pkg/shell"
 )
 
+// Changed in production environment
+//const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
 const database = "enrd:0ta29SourC3@tcp(localhost:3306)/enrd"
 const port = 52000
 const pathTable = "path_info"
