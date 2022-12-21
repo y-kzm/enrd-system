@@ -40,6 +40,7 @@ type SRInfo struct {
 	table_name string
 }
 
+
 func LoadCfgStruct(c *cli.Context, filename string) (erconfig shell.ErConfig, erparam shell.ErParam, err error) {
 	cfgFile := c.String(filename)
 	if cfgFile != "" {
@@ -135,7 +136,7 @@ func CmdConf(c *cli.Context) error {
 	defer res.Close()
 
 	path := []*PathInfo{}
-	sr := []*SRInfo{}
+	//sr := []SRInfo{}
 
 	// Register records for measurement paths
 	for i := range erconfig.Config.Rules {
@@ -176,15 +177,16 @@ func CmdConf(c *cli.Context) error {
 			sid_list = append(sid_list, pair[erconfig.Config.Rules[i].TransitNodes[j]])
 		}
 
-		sr = append(sr, &SRInfo{pair[erconfig.Config.SrcNode], erconfig.Config.Rules[i].VRF,
-			pair[erconfig.Config.Rules[i].DstNode], sid_list, path_str})
+		//sr = append(sr, &SRInfo{pair[erconfig.Config.SrcNode], erconfig.Config.Rules[i].VRF,
+		//	pair[erconfig.Config.Rules[i].DstNode], sid_list, path_str})
 	}
 
 	// TODO: SRInfoを構成する
 	// ConfigureReq()の引数で渡してあげる
+	//var api.SRInfo []sr_info
 
 	// それをそのままgrpcで送る
-	ConfigureRequest(erconfig.Config.SrcNode, sr)
+	ConfigureRequest(erconfig.Config.SrcNode)
 
 	return nil
 }
@@ -227,7 +229,7 @@ func PrintTemplate(filename string) {
 	}
 }
 
-func ConfigureRequest(addr string, sr []SRInfo) {
+func ConfigureRequest(addr string) {
 	conn, err := grpc.Dial(addr+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Did not connect: %v", err)
@@ -240,8 +242,16 @@ func ConfigureRequest(addr string, sr []SRInfo) {
 
 	r, err := c.Configure(ctx, &api.ConfigureRequest{
 		Msg:    "go",
-		SrInfo: {
-			Src
+		SrInfo: []*api.SRInfo{
+			{
+				SrcAddr: "a", 
+				Vrf: 100, 
+				DstAddr: "c", 
+				SidList: []string{
+					"z", "x", "c", 
+				}, 
+				TableName: "hoge", 
+			},
 		},
 	})
 	if err != nil {
