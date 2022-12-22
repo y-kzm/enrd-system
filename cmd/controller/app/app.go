@@ -138,7 +138,7 @@ func CmdConf(c *cli.Context) error {
 	defer res.Close()
 
 	path := []*PathInfo{}
-	//sr := []SRInfo{}
+	sr := []*api.SRInfo{}
 
 	// Register records for measurement paths
 	for i := range erconfig.Config.Rules {
@@ -179,8 +179,14 @@ func CmdConf(c *cli.Context) error {
 			sid_list = append(sid_list, pair[erconfig.Config.Rules[i].TransitNodes[j]])
 		}
 
-		//sr = append(sr, &SRInfo{pair[erconfig.Config.SrcNode], erconfig.Config.Rules[i].VRF,
-		//	pair[erconfig.Config.Rules[i].DstNode], sid_list, path_str})
+
+		sr = append(sr, &api.SRInfo{
+			SrcAddr: pair[erconfig.Config.SrcNode],
+			Vrf: erconfig.Config.Rules[i].VRF,
+			DstAddr: pair[erconfig.Config.Rules[i].DstNode],
+			SidList: sid_list, 
+			TableName: path_str,
+		})
 	}
 
 	// TODO: SRInfoを構成する
@@ -188,7 +194,7 @@ func CmdConf(c *cli.Context) error {
 	//var api.SRInfo []sr_info
 
 	// それをそのままgrpcで送る
-	ConfigureRequest(erconfig.Config.SrcNode)
+	ConfigureRequest(erconfig.Config.SrcNode, sr)
 
 	return nil
 }
@@ -231,7 +237,7 @@ func PrintTemplate(filename string) {
 	}
 }
 
-func ConfigureRequest(addr string) {
+func ConfigureRequest(addr string, sr []*api.SRInfo) {
 	conn, err := grpc.Dial(addr+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Did not connect: %v", err)
@@ -244,21 +250,29 @@ func ConfigureRequest(addr string) {
 
 	r, err := c.Configure(ctx, &api.ConfigureRequest{
 		Msg:    "go",
-		SrInfo: []*api.SRInfo{
-			{
-				SrcAddr: "a", 
-				Vrf: 100, 
-				DstAddr: "c", 
-				SidList: []string{
-					"z", "x", "c", 
-				}, 
-				TableName: "hoge", 
-			},
-		},
+		SrInfo: sr,
 	})
 	if err != nil {
 		log.Fatalf("Could not echo: %v", err)
 	}
+
+	// r, err := c.Configure(ctx, &api.ConfigureRequest{
+	// 	Msg:    "go",
+	// 	SrInfo: []*api.SRInfo{
+	// 		{
+	// 			SrcAddr: "a", 
+	// 			Vrf: 100, 
+	// 			DstAddr: "c", 
+	// 			SidList: []string{
+	// 				"z", "x", "c", 
+	// 			}, 
+	// 			TableName: "hoge", 
+	// 		},
+	// 	},
+	// })
+	// if err != nil {
+	// 	log.Fatalf("Could not echo: %v", err)
+	// }
 
 	// TODO: 戻り値チェック
 	log.Printf("Received from server: %d %s", r.GetStatus(), r.GetMsg())

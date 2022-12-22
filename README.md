@@ -1,2 +1,2 @@
-# Enrd-System 
-- Estimate network resources for Dataflow.
+# Enrd-System
+- Estimation of network resource status for Dataflow platform management.
