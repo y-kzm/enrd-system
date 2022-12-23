@@ -22,7 +22,8 @@ type Server struct {
 // Recieve Configure message
 func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.ConfigureResponse, error) {
 	log.Printf("Called configure procedure")
-	// log.Print(in.SrInfo)
+	// debug
+	log.Print(in.SrInfo)
 	if in.Msg == "go" {
 		// TODO: テーブル名とパスの対応付けをしとく必要あり?>in.SrInfoを覚えとけばOK？Successのときだけ別の変数で記憶しとく？
 		for i, _ := range in.SrInfo {
@@ -169,13 +170,23 @@ func IPv6AddrAdd(src string, dev string) (error){
  *  ip -6 rule add from fd00:0:172:16:2::5 table 100
  */
 func CreateVRF(vrf int32, src string) (error) {
-	ip1 := net.ParseIP("fd56:6b58:db28:2913::")
-	ip2 := net.ParseIP("fde9:379f:3b35:6635::")
+	//ip1 := net.ParseIP("fd56:6b58:db28:2913::")
+	//ip2 := net.ParseIP("fde9:379f:3b35:6635::")
 
-	srcNet := &net.IPNet{IP: ip1, Mask: net.CIDRMask(64, 128)}
-	dstNet := &net.IPNet{IP: ip2, Mask: net.CIDRMask(96, 128)}
+	srcIP, _, err := net.ParseCIDR(src)
+	if err != nil {
+		return err
+	}
+	dstIP, _, err := net.ParseCIDR("::/128")
+	if err != nil {
+		return err
+	}
 
-	_, err := netlink.RuleList(netlink.FAMILY_V6)
+
+	srcNet := &net.IPNet{IP: srcIP, Mask: net.CIDRMask(64, 128)}
+	dstNet := &net.IPNet{IP: dstIP, Mask: net.CIDRMask(96, 128)}
+
+	_, err = netlink.RuleList(netlink.FAMILY_V6)
 	if err != nil {
 		return err
 	}

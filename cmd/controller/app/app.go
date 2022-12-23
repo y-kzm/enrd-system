@@ -1,5 +1,7 @@
 package app
 
+// TODO: log.Faitalの廃止
+
 import (
 	"context"
 	"database/sql"
@@ -257,9 +259,7 @@ func ConfigureRequest(addr string, sr []*api.SRInfo) {
 	}
 
 	// TODO: 戻り値チェック
-	log.Printf("Received from server: %d %s", r.GetStatus(), r.GetMsg())
-
-	// TODO: 標準出力
+	fmt.Printf("Received from server: Status %d Msg %s", r.GetStatus(), r.GetMsg())
 }
 
 
