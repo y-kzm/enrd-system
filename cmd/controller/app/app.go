@@ -256,26 +256,10 @@ func ConfigureRequest(addr string, sr []*api.SRInfo) {
 		log.Fatalf("Could not echo: %v", err)
 	}
 
-	// r, err := c.Configure(ctx, &api.ConfigureRequest{
-	// 	Msg:    "go",
-	// 	SrInfo: []*api.SRInfo{
-	// 		{
-	// 			SrcAddr: "a", 
-	// 			Vrf: 100, 
-	// 			DstAddr: "c", 
-	// 			SidList: []string{
-	// 				"z", "x", "c", 
-	// 			}, 
-	// 			TableName: "hoge", 
-	// 		},
-	// 	},
-	// })
-	// if err != nil {
-	// 	log.Fatalf("Could not echo: %v", err)
-	// }
-
 	// TODO: 戻り値チェック
 	log.Printf("Received from server: %d %s", r.GetStatus(), r.GetMsg())
 
 	// TODO: 標準出力
 }
+
+

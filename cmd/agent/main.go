@@ -15,40 +15,54 @@ import (
 )
 
 const port = 52000
+var nic = os.Args[1]
 
 func main() {
+	// Argument check
 	if len(os.Args) != 3 {
-		fmt.Fprintf(os.Stderr, "Usage: ./agent [NIC] [SID]\n")
-		log.Fatalf("Argument error: %#v", os.Args)
+		fmt.Fprintf(os.Stderr, "Usage: ./agent [InterfaceName] [SID]\n")
+		os.Exit(1)
 	}
-	log.Printf("NIC: %s SID: %s", os.Args[1], os.Args[2])
+	log.Printf("Interface: %s SID: %s", os.Args[1], os.Args[2])
 
-	// Connect to database
-	app.ConnectToDB()
+	// Connecting to the database
+	app.ConnectDB()
 
-	// TODO: クリーン処理
+	// TODO: Cleanup()
 	// 1. 不要なLoopbackアドレスを削除
 	// 2. 指定SID宛のルートを削除
 
-	// Assign SID, Add End route
-	app.AssignSID(os.Args[2])
-	log.Print("Successful assign SID")
-	app.SEG6LocalRouteEndAdd(os.Args[2], os.Args[1])
-	log.Print("Successful add End route")
+	// Assignment of SID
+	if err := app.IPv6AddrAdd(os.Args[2], "lo"); err != nil {
+		log.Print("Failed to assign SID")
+		// TODO: Cleanup()
+		os.Exit(1)
+	}
+	// Adding an End Route
+	if err = app.SEG6LocalRouteEndAdd(os.Args[2], nic); err != nil {
+		log.Print("Failed to add End route")
+		// TODO: Cleanup()
+		os.Exit(1)
+	}
 
-	// Start IGI/PTR server
+	// Startup of IGI/PTR server
+	// TODO: エラー処理
 	go tool.EstimateServer()
-	log.Print("Start IGI/PTR server")
+	log.Print("Startup of IGI/PTR server")
 
-	// Start gRPC server
+	// Startup of gRPC server
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Printf("Failed to listen: %v", err)
+		// TODO: Cleanup()
+		os.Exit(1)
 	}
 	s := grpc.NewServer()
 	api.RegisterServiceServer(s, &procedure.Server{})
 	log.Printf("Server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		log.Printf("Failed to serve: %v", err)
+		// TODO: Cleanup()
+		os.Exit(1)		
 	}
 }
