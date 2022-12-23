@@ -210,7 +210,35 @@ func CreateVRF(vrf int32, src string) (error) {
  *  ip route add fc00:4::/64 encap seg6 mode encap segs fc00:2::,fc00:3:: dev net0 table 100
  */
 func SEG6EncapRouteAdd(dst string, vrf int32, nic string, sidlist []string) (error) {
-	return nil
+	var sidList []net.IP
+
+	seg6encap := &netlink.SEG6Encap{Mode: nl.SEG6_IPTUN_MODE_ENCAP}
+	for _, sid := range sidlist {
+		sidList = append([]net.IP{net.ParseIP(sid)}, sidList...)
+	}
+	seg6encap.Segments = sidList
+
+	link, err := netlink.LinkByName("enp6s0")
+	if err != nil {
+		return err
+	}
+	dstIP, dstIPnet, err := net.ParseCIDR(dst)
+	if err != nil {
+		return err
+	}
+
+	route := netlink.Route{
+		LinkIndex: link.Attrs().Index,
+		Dst: &net.IPNet{
+			IP:   dstIP,
+			Mask: dstIPnet.Mask,
+		},
+		Encap: seg6encap,
+		Table: int(vrf),
+	}
+	_ = netlink.RouteDel(&route)
+
+	return netlink.RouteAdd(&route)
 }
 
 
