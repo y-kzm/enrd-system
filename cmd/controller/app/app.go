@@ -22,8 +22,8 @@ import (
 )
 
 // Changed in production environment
-//const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
-const database = "enrd:0ta29SourC3@tcp(localhost:3306)/enrd"
+const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
+//const database = "enrd:0ta29SourC3@tcp(localhost:3306)/enrd"
 const port = 52000
 const pathTable = "path_info"
 
@@ -181,7 +181,7 @@ func CmdConf(c *cli.Context) error {
 
 
 		sr = append(sr, &api.SRInfo{
-			SrcAddr: pair[erconfig.Config.SrcNode],
+			SrcAddr: erconfig.Config.Rules[i].SrcAddr,
 			Vrf: erconfig.Config.Rules[i].VRF,
 			DstAddr: pair[erconfig.Config.Rules[i].DstNode],
 			SidList: sid_list, 
