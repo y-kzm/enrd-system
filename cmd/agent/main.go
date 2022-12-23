@@ -9,7 +9,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/y-kzm/enrd-system/api"
-	procedure "github.com/y-kzm/enrd-system/cmd/agent/api"
 	"github.com/y-kzm/enrd-system/cmd/agent/app"
 	tool "github.com/y-kzm/enrd-system/pkg/tool/server"
 )
@@ -39,7 +38,7 @@ func main() {
 		os.Exit(1)
 	}
 	// Adding an End Route
-	if err = app.SEG6LocalRouteEndAdd(os.Args[2], nic); err != nil {
+	if err := app.SEG6LocalRouteEndAdd(os.Args[2], nic); err != nil {
 		log.Print("Failed to add End route")
 		// TODO: Cleanup()
 		os.Exit(1)
@@ -58,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 	s := grpc.NewServer()
-	api.RegisterServiceServer(s, &procedure.Server{})
+	api.RegisterServiceServer(s, &app.Server{})
 	log.Printf("Server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Printf("Failed to serve: %v", err)
