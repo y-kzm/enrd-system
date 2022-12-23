@@ -173,18 +173,17 @@ func CreateVRF(vrf int32, src string) (error) {
 	//ip1 := net.ParseIP("fd56:6b58:db28:2913::")
 	//ip2 := net.ParseIP("fde9:379f:3b35:6635::")
 
-	srcIP, _, err := net.ParseCIDR(src)
+	srcIP, srcIPnet, err := net.ParseCIDR(src)
 	if err != nil {
 		return err
 	}
-	dstIP, _, err := net.ParseCIDR("::/128")
+	dstIP, dstIPnet, err := net.ParseCIDR("::/128")
 	if err != nil {
 		return err
 	}
 
-
-	srcNet := &net.IPNet{IP: srcIP, Mask: net.CIDRMask(64, 128)}
-	dstNet := &net.IPNet{IP: dstIP, Mask: net.CIDRMask(96, 128)}
+	srcNet := &net.IPNet{IP: srcIP, Mask: srcIPnet.Mask}
+	dstNet := &net.IPNet{IP: dstIP, Mask: dstIPnet.Mask}
 
 	_, err = netlink.RuleList(netlink.FAMILY_V6)
 	if err != nil {

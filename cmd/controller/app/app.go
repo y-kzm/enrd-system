@@ -259,7 +259,7 @@ func ConfigureRequest(addr string, sr []*api.SRInfo) {
 	}
 
 	// TODO: 戻り値チェック
-	fmt.Printf("Received from server: Status %d Msg %s", r.GetStatus(), r.GetMsg())
+	fmt.Printf("Received from server: Status %d Msg %s\n", r.GetStatus(), r.GetMsg())
 }
 
 
