@@ -15,9 +15,11 @@ controller:
 	go build -o ./bin/controller cmd/controller/main.go
 
 agent:
+	make cgo
 	go build -o ./bin/agent cmd/agent/main.go
 
-rm:
+clean:
+	cd ./pkg/tool/igi-ptr && make clean
 	rm -rf ./bin
 
 cgo:

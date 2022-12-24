@@ -29,6 +29,7 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 		for i, _ := range in.SrInfo {
 			if err := IPv6AddrAdd(in.SrInfo[i].SrcAddr, Nic); err != nil {
 				// TODO: Cleanup()
+				log.Print(err)
 				return &api.ConfigureResponse{
 					Status: 1,
 					Msg: "Failed to assign IPv6 address",
@@ -36,6 +37,7 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 			}
 			if err := CreateVRF(in.SrInfo[i].Vrf, in.SrInfo[i].SrcAddr); err != nil {
 				// TODO: Cleanup()
+				log.Print(err)
 				return &api.ConfigureResponse{
 					Status: 1,
 					Msg: "Failed to create VRF",
@@ -43,6 +45,7 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 			}
 			if err := SEG6EncapRouteAdd(in.SrInfo[i].DstAddr, in.SrInfo[i].Vrf, Nic, in.SrInfo[i].SidList); err != nil {
 				// TODO: Cleanup()
+				log.Print(err)
 				return &api.ConfigureResponse{
 					Status: 1,
 					Msg: "Failed to add seg6 encap route",
@@ -64,7 +67,6 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 // Recieve Measure message
 func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.MeasureResponse, error) {
 	log.Printf("Called configure procedure")
-	log.Println(in)  // debug
 	if in.Method == "ptr" {
 		return &api.MeasureResponse{
 			Status: 0,
@@ -205,7 +207,7 @@ func CreateVRF(vrf int32, src string) (error) {
  * Ex.
  *  ip route add fc00:4::/64 encap seg6 mode encap segs fc00:2::,fc00:3:: dev net0 table 100
  */
-func SEG6EncapRouteAdd(dst string, vrf int32, nic string, sidlist []string) (error) {
+func SEG6EncapRouteAdd(dst string, vrf int32, dev string, sidlist []string) (error) {
 	var sidList []net.IP
 
 	seg6encap := &netlink.SEG6Encap{Mode: nl.SEG6_IPTUN_MODE_ENCAP}
@@ -214,7 +216,7 @@ func SEG6EncapRouteAdd(dst string, vrf int32, nic string, sidlist []string) (err
 	}
 	seg6encap.Segments = sidList
 
-	link, err := netlink.LinkByName(Nic)
+	link, err := netlink.LinkByName(dev)
 	if err != nil {
 		return err
 	}
