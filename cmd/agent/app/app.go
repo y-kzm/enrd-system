@@ -14,6 +14,7 @@ import (
 )
 
 const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
+var Nic string
 
 type Server struct {
 	api.UnimplementedServiceServer
@@ -22,31 +23,30 @@ type Server struct {
 // Recieve Configure message
 func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.ConfigureResponse, error) {
 	log.Printf("Called configure procedure")
-	// debug
-	log.Print(in.SrInfo)
+	log.Println(in.SrInfo)  // debug
 	if in.Msg == "go" {
 		// TODO: テーブル名とパスの対応付けをしとく必要あり?>in.SrInfoを覚えとけばOK？Successのときだけ別の変数で記憶しとく？
 		for i, _ := range in.SrInfo {
-			if err := IPv6AddrAdd(in.SrInfo[i].SrcAddr, "enp6s0"); err != nil {
+			if err := IPv6AddrAdd(in.SrInfo[i].SrcAddr, Nic); err != nil {
 				// TODO: Cleanup()
 				return &api.ConfigureResponse{
 					Status: 1,
 					Msg: "Failed to assign IPv6 address",
-				}, err
+				}, nil
 			}
 			if err := CreateVRF(in.SrInfo[i].Vrf, in.SrInfo[i].SrcAddr); err != nil {
 				// TODO: Cleanup()
 				return &api.ConfigureResponse{
 					Status: 1,
 					Msg: "Failed to create VRF",
-				}, err				
+				}, nil			
 			}
-			if err := SEG6EncapRouteAdd(in.SrInfo[i].DstAddr, in.SrInfo[i].Vrf, "enp6s0", in.SrInfo[i].SidList); err != nil {
+			if err := SEG6EncapRouteAdd(in.SrInfo[i].DstAddr, in.SrInfo[i].Vrf, Nic, in.SrInfo[i].SidList); err != nil {
 				// TODO: Cleanup()
 				return &api.ConfigureResponse{
 					Status: 1,
 					Msg: "Failed to add seg6 encap route",
-				}, err						
+				}, nil					
 			}
 		}
 		return &api.ConfigureResponse{
@@ -63,7 +63,8 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 
 // Recieve Measure message
 func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.MeasureResponse, error) {
-	log.Printf("Called Measure()")
+	log.Printf("Called configure procedure")
+	log.Println(in)  // debug
 	if in.Method == "ptr" {
 		return &api.MeasureResponse{
 			Status: 0,
@@ -79,29 +80,35 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 
 
 // Connection to database
-func ConnectDB() {
+func ConnectDB() (error){
 	db, err := sql.Open("mysql", database)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer db.Close()
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	} else {
 		var version string
 		db.QueryRow("SELECT VERSION()").Scan(&version)
 		log.Println("DB Version: ", version)
 	}
+
+	return nil
 }
 
 // TODO: CleanUp()
-	// TODO: Remove unwanted loopback addresses
-	// func RemoveSID()
-
-	// TODO: Delete routes to the specified SID
-	// func RouteDel()
+/**
+ * Ex.
+ *  ip -6 rule del from fd00:0:172:16:ffff::1/64
+ *  ip -6 route del fc00:4::/64  encap seg6 mode encap segs fc00:3::,fc00:2:: dev enp6s0 table 102 metric 1024 pref medium
+ *  ip addr del fd00:0:172:16:ffff::1/64 dev enp6s0
+ *  ip addr del fc00:1::/64 dev lo
+ *  ip route del fc00:1::/64
+ */
+// func CleanUp() {}
 
 
 // Addition of Seg6 End route
@@ -170,20 +177,12 @@ func IPv6AddrAdd(src string, dev string) (error){
  *  ip -6 rule add from fd00:0:172:16:2::5 table 100
  */
 func CreateVRF(vrf int32, src string) (error) {
-	//ip1 := net.ParseIP("fd56:6b58:db28:2913::")
-	//ip2 := net.ParseIP("fde9:379f:3b35:6635::")
-
 	srcIP, srcIPnet, err := net.ParseCIDR(src)
-	if err != nil {
-		return err
-	}
-	dstIP, dstIPnet, err := net.ParseCIDR("::/128")
 	if err != nil {
 		return err
 	}
 
 	srcNet := &net.IPNet{IP: srcIP, Mask: srcIPnet.Mask}
-	dstNet := &net.IPNet{IP: dstIP, Mask: dstIPnet.Mask}
 
 	_, err = netlink.RuleList(netlink.FAMILY_V6)
 	if err != nil {
@@ -193,10 +192,7 @@ func CreateVRF(vrf int32, src string) (error) {
 	rule := netlink.NewRule()
 	rule.Table = int(vrf)
 	rule.Src = srcNet
-	rule.Dst = dstNet
 	rule.Priority = 5
-	// rule.OifName = main.nic
-	// rule.IifName = main.nic
 	if err := netlink.RuleAdd(rule); err != nil {
 		return err
 	}
@@ -218,7 +214,7 @@ func SEG6EncapRouteAdd(dst string, vrf int32, nic string, sidlist []string) (err
 	}
 	seg6encap.Segments = sidList
 
-	link, err := netlink.LinkByName("enp6s0")
+	link, err := netlink.LinkByName(Nic)
 	if err != nil {
 		return err
 	}

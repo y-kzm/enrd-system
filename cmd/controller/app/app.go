@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -23,7 +22,7 @@ import (
 	"github.com/y-kzm/enrd-system/pkg/shell"
 )
 
-// Changed in production environment
+// Need to change in production environment
 const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
 //const database = "enrd:0ta29SourC3@tcp(localhost:3306)/enrd"
 const port = 52000
@@ -35,16 +34,7 @@ type PathInfo struct {
 	num  int
 }
 
-// pb.goで定義されてるっぽい？
-type SRInfo struct {
-	src_addr   string
-	vrf        int32
-	dst_addr   string
-	sid_list   []string
-	table_name string
-}
-
-
+// Parsing yaml files
 func LoadCfgStruct(c *cli.Context, filename string) (erconfig shell.ErConfig, erparam shell.ErParam, err error) {
 	cfgFile := c.String(filename)
 	if cfgFile != "" {
@@ -71,70 +61,77 @@ func LoadCfgStruct(c *cli.Context, filename string) (erconfig shell.ErConfig, er
 	return erconfig, erparam, nil
 }
 
+// Temp command
 func CmdTemp(c *cli.Context) error {
-	// TODO: パスに依存しない形にする
-	PrintTemplate("config.yaml")
-	PrintTemplate("param.yaml")
+	// TODO: パスに依存しない形に
+	if err := PrintTemplate("config.yaml"); err != nil {
+		return err
+	}
+	if err := PrintTemplate("param.yaml"); err != nil {
+		return err
+	}
 
 	return nil
 }
 
+// Init command
 func CmdInit(c *cli.Context) error {
 	fmt.Fprint(os.Stdout, "***** Init Command! *****\n")
 
 	db, err := sql.Open("mysql", database)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer db.Close()
 
-	/* Delete all tables */
+	// Delete all tables
 	res, _ := db.Query("SHOW TABLES")
 	var table string
 	for res.Next() {
 		res.Scan(&table)
 		_, err = db.Exec("DROP TABLE IF EXISTS " + table)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
 	defer res.Close()
 
-	/* Creation of path_info table */
+	// Creation of path_info table 
 	_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + pathTable + " ( id varchar(40) PRIMARY KEY, path varchar(64), num smallint unsigned ) ")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	return nil
 }
 
+// Conf command
 func CmdConf(c *cli.Context) error {
 	fmt.Fprint(os.Stdout, "***** Config Command! *****\n")
 
-	/* Parsing yaml files */
+	// Parsing yaml files
 	erconfig, _, err := LoadCfgStruct(c, "config")
 	if err != nil {
 		return err
 	}
-	// fmt.Println(erconfig.Config.Rules)
+	// fmt.Println(erconfig.Config.Rules)  // debug
 
-	/* Memorize mapping between host name and SID */
+	// Memorize mapping between host name and SID 
 	pair := make(map[string]string)
 	for _, i := range erconfig.Nodes {
 		pair[i.Host] = i.SID
 	}
 
-	/* Check for existing table */
+	// Check for existing table
 	db, err := sql.Open("mysql", database)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer db.Close()
 	res, _ := db.Query("SELECT * FROM " + pathTable)
 	for res.Next() {
 		if res.Scan() != nil {
-			log.Fatal("database is already exist: ", err)
+			return err
 		}
 	}
 	defer res.Close()
@@ -146,11 +143,11 @@ func CmdConf(c *cli.Context) error {
 	for i := range erconfig.Config.Rules {
 		uuid, err := uuid.NewRandom()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		uuid_str := uuid.String()
 
-		/* Create an array with additional source and destination nodes */
+		// Create an array with additional source and destination nodes
 		path_arr := erconfig.Config.Rules[i].TransitNodes                     // [ Compute2, Compute3 ]
 		path_arr = append([]string{erconfig.Config.SrcNode}, path_arr[0:]...) // [ Compute1, Compute2, Compute3 ]
 		path_arr = append(path_arr, erconfig.Config.Rules[i].DstNode)         // [ Compute1, Compute2, Compute3, Compute4 ]
@@ -158,24 +155,25 @@ func CmdConf(c *cli.Context) error {
 
 		path = append(path, &PathInfo{uuid_str, path_str, 0})
 
-		/* Insert Execution */
+		// Insert Execution
 		ins, err := db.Prepare("INSERT INTO " + pathTable + " (id,path,num) VALUES(?,?,?)")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		defer ins.Close()
 		_, err = ins.Exec(path[i].id, path[i].path, path[i].num)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
-		/* Create a measurement result table for each measurement path */
+		// Create a measurement result table for each measurement path 
 		_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + path_str + " ( cycle int unsigned PRIMARY KEY, estimate float, timestamp datetime ) ")
 		if err != nil {
-			log.Fatal(err)
+			return err
+
 		}
 
-		/* Convert host name to SID (IPv6 address format) */
+		// Convert host name to SID (IPv6 address format)
 		sid_list := []string{}
 		for j := range erconfig.Config.Rules[i].TransitNodes {
 			sid_list = append(sid_list, pair[erconfig.Config.Rules[i].TransitNodes[j]])
@@ -191,25 +189,37 @@ func CmdConf(c *cli.Context) error {
 		})
 	}
 
-	// TODO: SRInfoを構成する
-	// ConfigureReq()の引数で渡してあげる
-	//var api.SRInfo []sr_info
-
-	// それをそのままgrpcで送る
-	ConfigureRequest(erconfig.Config.SrcNode, sr)
+	if err := ConfigureRequest(erconfig.Config.SrcNode, sr); err != nil {
+		return err
+	}
 
 	return nil
 }
 
+// Estimate command
 func CmdEstimate(c *cli.Context) error {
-	fmt.Fprint(os.Stdout, "estimate command!\n")
+	fmt.Fprint(os.Stdout, "***** estimate command! *****\n")
 
-	// yaml解析して構造体配列に格納
+	// Parse yaml and store in structure array
 	_, param, err := LoadCfgStruct(c, "param")
 	if err != nil {
 		return err
 	}
-	fmt.Println(param.Param) // パラメータ取得OKc
+	fmt.Println(param.Param) // debug
+
+	pm := api.Param{
+		PacketNum: param.Param.PacketNum,
+		PacketSize: param.Param.PacketSize,
+		RepeatNum: param.Param.RepeatNum,
+		MeasNum: param.Param.MeasNum,
+		SmaInterval: param.Param.SmaInterval,
+	}
+
+	if err := MeasureRequest(param.Param.SrcNode, param.Param.Method, &pm); err != nil {
+		return err
+	}
+
+	// 12/23: 次ここから
 
 	// TODO: パス情報テーブルからレコードを検索
 	// 存在しない場合はエラー
@@ -222,11 +232,12 @@ func CmdEstimate(c *cli.Context) error {
 	return nil
 }
 
-func PrintTemplate(filename string) {
+// Display of template files
+func PrintTemplate(filename string) (error){
 	fmt.Print("------------------- " + filename + "\n")
 	f, err := os.Open("./templates/" + filename)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer f.Close()
 	buf := make([]byte, 1024)
@@ -237,12 +248,15 @@ func PrintTemplate(filename string) {
 		}
 		fmt.Println(string(buf[:n]))
 	}
+
+	return nil
 }
 
-func ConfigureRequest(addr string, sr []*api.SRInfo) {
-	conn, err := grpc.Dial(addr+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+// Send configuration infomation
+func ConfigureRequest(host string, sr []*api.SRInfo) (error){
+	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Did not connect: %v", err)
+		return err
 	}
 	defer conn.Close()
 	c := api.NewServiceClient(conn)
@@ -255,11 +269,42 @@ func ConfigureRequest(addr string, sr []*api.SRInfo) {
 		SrInfo: sr,
 	})
 	if err != nil {
-		log.Fatalf("Could not echo: %v", err)
+		return err
 	}
 
-	// TODO: 戻り値チェック
 	fmt.Printf("Received from server: Status %d Msg %s\n", r.GetStatus(), r.GetMsg())
+	if r.GetStatus() != 0 {
+		return fmt.Errorf("%s", r.GetMsg())
+	}
+
+	return nil
 }
 
 
+// Send measurement request
+func MeasureRequest(host string, method string, param *api.Param) (error){
+	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	c := api.NewServiceClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	r, err := c.Measure(ctx, &api.MeasureRequest{
+		Method: method,
+		Param: param,
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Received from server: Status %d Msg %s\n", r.GetStatus(), r.GetMsg())
+	if r.GetStatus() != 0 {
+		return fmt.Errorf("%s", r.GetMsg())
+	}
+
+	return nil
+}

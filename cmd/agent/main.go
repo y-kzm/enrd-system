@@ -14,7 +14,6 @@ import (
 )
 
 const port = 52000
-var nic = os.Args[1]
 
 func main() {
 	// Argument check
@@ -22,10 +21,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Usage: ./agent [InterfaceName] [SID]\n")
 		os.Exit(1)
 	}
+	app.Nic = os.Args[1]
 	log.Printf("Interface: %s SID: %s", os.Args[1], os.Args[2])
 
 	// Connecting to the database
-	app.ConnectDB()
+	if err := app.ConnectDB(); err != nil {
+		log.Print("Failed to connect to database")
+		os.Exit(1)		
+	}
 
 	// TODO: Cleanup()
 	// 1. 不要なLoopbackアドレスを削除
@@ -38,7 +41,7 @@ func main() {
 		os.Exit(1)
 	}
 	// Adding an End Route
-	if err := app.SEG6LocalRouteEndAdd(os.Args[2], nic); err != nil {
+	if err := app.SEG6LocalRouteEndAdd(os.Args[2], app.Nic); err != nil {
 		log.Print("Failed to add End route")
 		// TODO: Cleanup()
 		os.Exit(1)
