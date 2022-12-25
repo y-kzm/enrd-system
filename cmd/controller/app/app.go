@@ -34,6 +34,64 @@ type PathInfo struct {
 	num  int
 }
 
+
+// Send configuration infomation
+func ConfigureRequest(host string, sr []*api.SRInfo) (error){
+	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	c := api.NewServiceClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	r, err := c.Configure(ctx, &api.ConfigureRequest{
+		Msg:    "go",
+		SrInfo: sr,
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Received from server: Status %d Msg %s\n", r.GetStatus(), r.GetMsg())
+	if r.GetStatus() != 0 {
+		return fmt.Errorf("%s", r.GetMsg())
+	}
+
+	return nil
+}
+
+
+// Send measurement request
+func MeasureRequest(host string, method string, param *api.Param) (error){
+	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	c := api.NewServiceClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	r, err := c.Measure(ctx, &api.MeasureRequest{
+		Method: method,
+		Param: param,
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Received from server: Status %d Msg %s\n", r.GetStatus(), r.GetMsg())
+	if r.GetStatus() != 0 {
+		return fmt.Errorf("%s", r.GetMsg())
+	}
+
+	return nil
+}
+
 // Parsing yaml files
 func LoadCfgStruct(c *cli.Context, filename string) (erconfig shell.ErConfig, erparam shell.ErParam, err error) {
 	cfgFile := c.String(filename)
@@ -219,8 +277,6 @@ func CmdEstimate(c *cli.Context) error {
 		return err
 	}
 
-	// 12/23: 次ここから
-
 	// TODO: パス情報テーブルからレコードを検索
 	// 存在しない場合はエラー
 	// 存在すればOK & 計測テーブルここで作る？
@@ -247,63 +303,6 @@ func PrintTemplate(filename string) (error){
 			break
 		}
 		fmt.Println(string(buf[:n]))
-	}
-
-	return nil
-}
-
-// Send configuration infomation
-func ConfigureRequest(host string, sr []*api.SRInfo) (error){
-	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	c := api.NewServiceClient(conn)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	r, err := c.Configure(ctx, &api.ConfigureRequest{
-		Msg:    "go",
-		SrInfo: sr,
-	})
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Received from server: Status %d Msg %s\n", r.GetStatus(), r.GetMsg())
-	if r.GetStatus() != 0 {
-		return fmt.Errorf("%s", r.GetMsg())
-	}
-
-	return nil
-}
-
-
-// Send measurement request
-func MeasureRequest(host string, method string, param *api.Param) (error){
-	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	c := api.NewServiceClient(conn)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	r, err := c.Measure(ctx, &api.MeasureRequest{
-		Method: method,
-		Param: param,
-	})
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Received from server: Status %d Msg %s\n", r.GetStatus(), r.GetMsg())
-	if r.GetStatus() != 0 {
-		return fmt.Errorf("%s", r.GetMsg())
 	}
 
 	return nil

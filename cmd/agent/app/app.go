@@ -14,7 +14,10 @@ import (
 )
 
 const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
-var Nic string
+var (
+	Nic string
+	Store []*api.SRInfo
+)
 
 type Server struct {
 	api.UnimplementedServiceServer
@@ -52,6 +55,14 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 				}, nil					
 			}
 		}
+		if c := copy(Store, in.SrInfo); c <= 0 {
+			// TODO: Cleanup()
+			log.Print("Element does not exist")
+			return &api.ConfigureResponse{
+				Status: 1,
+				Msg: "Element does not exist",
+			}, nil		
+		} 
 		return &api.ConfigureResponse{
 			Status: 0,
 			Msg: "Success!!!",
@@ -68,14 +79,17 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.MeasureResponse, error) {
 	log.Printf("Called configure procedure")
 	if in.Method == "ptr" {
+		// TODO: 各パスの測定を行う 測定パス数のループ
+		log.Print(Store)
+
 		return &api.MeasureResponse{
 			Status: 0,
-			Msg:    "OK!!!",
+			Msg:    "Success!!!",
 		}, nil
 	} else {
 		return &api.MeasureResponse{
 			Status: 1,
-			Msg:    "NG...",
+			Msg:    "Not supported",
 		}, nil
 	}
 }
@@ -212,7 +226,12 @@ func SEG6EncapRouteAdd(dst string, vrf int32, dev string, sidlist []string) (err
 
 	seg6encap := &netlink.SEG6Encap{Mode: nl.SEG6_IPTUN_MODE_ENCAP}
 	for _, sid := range sidlist {
-		sidList = append([]net.IP{net.ParseIP(sid)}, sidList...)
+		ip, _, err := net.ParseCIDR(sid)
+		if err != nil {
+				return err
+		}
+		sidList = append(sidList, ip)
+
 	}
 	seg6encap.Segments = sidList
 

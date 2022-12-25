@@ -29,7 +29,7 @@ type ErParam struct {
 }
 
 type Param struct {
-	SrcNode     string `yaml:"mm_src_node"`
+	SrcNode     string `yaml:"mm_src_node" mapstructure:"mm_src_node"`
 	Method      string `yaml:"method"`
 	PacketNum   int32  `yaml:"packet_num" mapstructure:"packet_num"`
 	PacketSize  int32  `yaml:"packet_size" mapstructure:"packet_size"`
