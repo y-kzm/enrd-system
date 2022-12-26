@@ -7,7 +7,7 @@
 int main()
 {
     printf("This is dummy.\n");
-    Usage();
+    Usage_client();
     
     return 0;
 }

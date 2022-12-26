@@ -47,6 +47,10 @@ SRVC = setsignal.c ptr-server.c server_main.c
 #.c.o:
 #	@rm -f $@
 #	$(CC) $(CFLAGS) -c $*.c
+.c.o:
+	@rm -f $@
+	$(CC) $(CFLAGS) -c $*.c
+
 
 all: ptr-server ptr-client
 

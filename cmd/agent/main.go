@@ -10,7 +10,7 @@ import (
 
 	"github.com/y-kzm/enrd-system/api"
 	"github.com/y-kzm/enrd-system/cmd/agent/app"
-	tool "github.com/y-kzm/enrd-system/pkg/tool/server"
+	"github.com/y-kzm/enrd-system/pkg/tool/server"
 )
 
 const port = 52000
@@ -49,7 +49,7 @@ func main() {
 
 	// Startup of IGI/PTR server
 	// TODO: エラー処理
-	go tool.EstimateServer()
+	go meas_server.EstimateServer()
 	log.Print("Startup of IGI/PTR server")
 
 	// Startup of gRPC server

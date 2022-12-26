@@ -1,4 +1,4 @@
-package tool
+package meas_server
 
 /*
 #cgo LDFLAGS: -L../igi-ptr -lptr-server

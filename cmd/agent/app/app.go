@@ -11,6 +11,7 @@ import (
 	"github.com/vishvananda/netlink/nl"
 
 	"github.com/y-kzm/enrd-system/api"
+	"github.com/y-kzm/enrd-system/pkg/tool/client"
 )
 
 const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
@@ -55,14 +56,7 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 				}, nil					
 			}
 		}
-		if c := copy(Store, in.SrInfo); c <= 0 {
-			// TODO: Cleanup()
-			log.Print("Element does not exist")
-			return &api.ConfigureResponse{
-				Status: 1,
-				Msg: "Element does not exist",
-			}, nil		
-		} 
+		Store = in.SrInfo
 		return &api.ConfigureResponse{
 			Status: 0,
 			Msg: "Success!!!",
@@ -78,10 +72,11 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 // Recieve Measure message
 func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.MeasureResponse, error) {
 	log.Printf("Called configure procedure")
+	log.Print(Store) // debug  
 	if in.Method == "ptr" {
 		// TODO: 各パスの測定を行う 測定パス数のループ
-		log.Print(Store)
-
+		res := meas_client.EstimateClient(60, 20, 700, "a", "b")
+		log.Print(res)
 		return &api.MeasureResponse{
 			Status: 0,
 			Msg:    "Success!!!",

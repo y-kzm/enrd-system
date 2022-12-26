@@ -53,15 +53,15 @@
 extern char *optarg;
 extern int optind, opterr, optopt;
 
-char version[] = "2.1";
+char client_version[] = "2.1";
 
 int delay_num = 0;
 int packet_size = PacketSize;
 int phase_num = 3;
-int probe_num = ProbeNum;
+int probe_num_client = ProbeNum;
 FILE *trace_fp = NULL;
-int verbose = 0;
-int debug = 0;
+int verbose_client = 0;
+int debug_client = 0;
 int designation_src = 0;
 
 double b_bw = 0, competing_bw, PTR_bw, a_bw, c_bw[MaxRepeat];
@@ -96,7 +96,7 @@ int msg_len;
 /* trace item: record the item used to dump out into trace file */
 struct trace_item
 {
-	int probe_num, packet_size, delay_num;
+	int probe_num_client, packet_size, delay_num;
 
 	double send_times[MaxProbeNum];
 	struct pkt_rcd_t rcv_record[MaxProbeNum];
@@ -114,10 +114,10 @@ struct trace_item *trace_tail = NULL;
 struct trace_item *cur_trace = NULL;
 
 /* usage message */
-void Usage()
+void Usage_client()
 {
-	printf("IGI/PTR-%s client usage:\n\n", version);
-	printf("\tptr-client [-n probe_num] [-s packet_size] [-p dst_port]\n");
+	printf("IGI/PTR-%s client usage:\n\n", client_version);
+	printf("\tptr-client [-n probe_num_client] [-s packet_size] [-p dst_port]\n");
 	printf("\t           [-k repeat_num] [-f trace_file] [-vdh] dst_address\n\n");
 	printf("\t-n      set the number of probing packets in each train [60]\n");
 	printf("\t-s      set the length of the probing packets in byte [500B]\n");
@@ -126,8 +126,8 @@ void Usage()
 	printf("\t        that the igi_server is using.\n");
 	printf("\t-k      the number of train probed for each source gap [3]\n");
 	printf("\t-f      dump packet-level trace into trace_file\n");
-	printf("\t-v      verbose mode.\n");
-	printf("\t-d      debug mode.\n");
+	printf("\t-v      verbose_client mode.\n");
+	printf("\t-d      debug_client mode.\n");
 	printf("\t-h      print this message.\n");
 	printf("\t-I 	  <address> \n");
 	printf("dst_address     can be either an IP address or a hostname\n\n");
@@ -157,13 +157,13 @@ void dump_trace()
 	/* first dump out the summary data */
 	p = trace_list;
 	index = 0;
-	fprintf(trace_fp, "\n%%probe_num packet_size delay_num avg_src_gap arv_dst_gap b_bw c_bw a_bw ptr\n");
+	fprintf(trace_fp, "\n%%probe_num_client packet_size delay_num avg_src_gap arv_dst_gap b_bw c_bw a_bw ptr\n");
 	fprintf(trace_fp, "summary_data = [\n");
 	while (p != NULL)
 	{
 		index++;
 		fprintf(trace_fp, "%2d %4d %5d %f %f %12.3f %12.3f %12.3f %12.3f\n",
-				p->probe_num,
+				p->probe_num_client,
 				p->packet_size,
 				p->delay_num,
 				p->avg_src_gap,
@@ -185,7 +185,7 @@ void dump_trace()
 		index++;
 
 		fprintf(trace_fp, "send_time_%d = [\n", index);
-		for (i = 1; i < p->probe_num; i++)
+		for (i = 1; i < p->probe_num_client; i++)
 		{
 			/*fprintf(trace_fp, "%f %f %f ",
 				p->send_times[i-1], p->send_times[i],
@@ -195,7 +195,7 @@ void dump_trace()
 		}
 		fprintf(trace_fp, "];\n");
 		fprintf(trace_fp, "send_array_size(%d) = %d; \n\n",
-				index, p->probe_num - 1);
+				index, p->probe_num_client - 1);
 
 		fprintf(trace_fp, "recv_time_%d = [\n", index);
 
@@ -221,7 +221,7 @@ void dump_trace()
 }
 
 /* make a clean exit on interrupts */
-RETSIGTYPE cleanup(int signo)
+RETSIGTYPE cleanup_client(int signo)
 {
 	if (trace_fp != NULL)
 	{
@@ -253,12 +253,12 @@ void quit()
 {
 	fflush(stdout);
 	fflush(stderr);
-	cleanup(1);
+	cleanup_client(1);
 	exit(-1);
 }
 
 /* get the current time */
-double get_time()
+double get_time_client()
 {
 	struct timeval tv;
 	struct timezone tz;
@@ -266,7 +266,7 @@ double get_time()
 
 	if (gettimeofday(&tv, &tz) < 0)
 	{
-		perror("get_time() fails, exit\n");
+		perror("get_time_client() fails, exit\n");
 		quit();
 	}
 
@@ -290,13 +290,13 @@ int get_delay_num(double gap)
 	s_time = e_time = 0;
 	while (e_time - s_time < gap * Scale)
 	{
-		s_time = get_time();
+		s_time = get_time_client();
 		for (k = 0; k < upper * Scale; k++)
 		{
 			tmp = tmp * 7;
 			tmp = tmp / 13;
 		}
-		e_time = get_time();
+		e_time = get_time_client();
 
 		upper *= 2;
 	}
@@ -305,13 +305,13 @@ int get_delay_num(double gap)
 	mid = (int)(upper + lower) / 2;
 	while (upper - lower > 20)
 	{
-		s_time = get_time();
+		s_time = get_time_client();
 		for (k = 0; k < mid * Scale; k++)
 		{
 			tmp = tmp * 7;
 			tmp = tmp / 13;
 		}
-		e_time = get_time();
+		e_time = get_time_client();
 
 		if (e_time - s_time > gap * Scale)
 			upper = mid;
@@ -511,7 +511,7 @@ void get_item(int control_sock, char *str)
 	/* read until we get two $ */
 	while (1)
 	{
-		if (debug)
+		if (debug_client)
 		{
 			printf("msg_len = %d  ", msg_len);
 		}
@@ -557,9 +557,9 @@ void init_connection()
 	struct addrinfo hints, *res, *i;
 
 	/* Setup signal handler for cleaning up */
-	(void)setsignal(SIGTERM, cleanup);
-	(void)setsignal(SIGINT, cleanup);
-	if ((oldhandler = setsignal(SIGHUP, cleanup)) != SIG_DFL)
+	(void)setsignal(SIGTERM, cleanup_client);
+	(void)setsignal(SIGINT, cleanup_client);
+	if ((oldhandler = setsignal(SIGHUP, cleanup_client)) != SIG_DFL)
 		(void)setsignal(SIGHUP, oldhandler);
 
 	/* Get hostname and IP address of target host */
@@ -615,7 +615,7 @@ void init_connection()
 			exit(1);
 		}
 		result = connect(control_sock, res->ai_addr, res->ai_addrlen);
-		if (verbose)
+		if (verbose_client)
 			printf("dst_port = %d\n", dst_port);
 	};
 	if (result < 0)
@@ -641,20 +641,20 @@ void init_connection()
 	strcpy(src_ip_str, hbuf);
 
 
-	if (verbose)
+	if (verbose_client)
 	{
 		printf("src addr: %s\n", src_ip_str);
 		printf("dst addr: %s\n", dst_ip_str);
 	}
 
 	/* send START message */
-	sprintf(msg_buf, "$START$%d$", probe_num);
+	sprintf(msg_buf, "$START$%d$", probe_num_client);
 	msg_len = strlen(msg_buf);
 	write(control_sock, msg_buf, msg_len);
 
 	/* wait for READY ack */
 	get_item(control_sock, cur_str);
-	if (verbose)
+	if (verbose_client)
 		printf("we get str: %s\n", cur_str);
 	if (strncmp(cur_str, "READY", 5) != 0)
 	{
@@ -663,7 +663,7 @@ void init_connection()
 	}
 
 	get_item(control_sock, cur_str);
-	if (verbose)
+	if (verbose_client)
 		printf("probing_port = %s\n", cur_str);
 	probing_port = atoi(cur_str);
 
@@ -674,20 +674,20 @@ void init_connection()
 	}
 }
 
-/* send out probe_num packets, each packet is packet_size bytes,   */
+/* send out probe_num_client packets, each packet is packet_size bytes,   */
 /* and the inital gap is set using delay_num                       */
-void send_packets(int probe_num, int packet_size, int delay_num, double *sent_times)
+void send_packets(int probe_num_client, int packet_size, int delay_num, double *sent_times)
 {
 	int i, k;
 	double tmp = 133333.0003333;
 	char send_buf[4096];
 
 	/* send out probing packets */
-	for (i = 0; i < probe_num - 1; i++)
+	for (i = 0; i < probe_num_client - 1; i++)
 	{
 		/* TODO: the middle send_times are not useful any more, since
 		 * we don't use sanity-check */
-		sent_times[i] = get_time();
+		sent_times[i] = get_time_client();
 		send_buf[0] = i;
 		sendto(probing_sock, send_buf, packet_size, 0, (struct sockaddr *)&(probing_server), sizeof(probing_server));  // ##### addrinfoとかにするといい？
 
@@ -704,7 +704,7 @@ void send_packets(int probe_num, int packet_size, int delay_num, double *sent_ti
 	sendto(probing_sock, send_buf, packet_size, 0, (struct sockaddr *)&(probing_server), sizeof(probing_server));  // #####
 
 	sendto(probing_sock, send_buf, 40, 0, (struct sockaddr *)&(probing_server2), sizeof(probing_server2));  // #####
-	sent_times[probe_num - 1] = get_time();
+	sent_times[probe_num_client - 1] = get_time_client();
 }
 
 /* get dst gap_sum and gap_count from the records */
@@ -740,7 +740,7 @@ int get_dst_gaps(struct pkt_rcd_t *rcv_record)
 	get_item(control_sock, num_str);
 	data_size = atoi(num_str); // this depends on stdlib.h  // #####
 	total_count = data_size / sizeof(struct pkt_rcd_t);
-	if (verbose)
+	if (verbose_client)
 		printf("from dst: data_size = %d total_count = %d \n", data_size, total_count);
 
 	/* get the data package */
@@ -765,7 +765,7 @@ int get_dst_gaps(struct pkt_rcd_t *rcv_record)
 		rcv_record[i].u_sec = ntohl(rcv_record[i].u_sec);
 		rcv_record[i].seq = ntohl(rcv_record[i].seq);
 
-		if (debug)
+		if (debug_client)
 			printf("%d %d %d \n", rcv_record[i].sec, rcv_record[i].u_sec, rcv_record[i].seq);
 		ptr += sizeof(struct pkt_rcd_t);
 	}
@@ -859,7 +859,7 @@ double get_bottleneck_bw(struct pkt_rcd_t *rcv_record, int count)
 			lower_time -= BinWidth;
 	}
 
-	if (debug)
+	if (debug_client)
 	{
 		printf("get_bottleneck_bw: %f %f \n", lower_time, upper_time);
 	}
@@ -903,7 +903,7 @@ double get_competing_bw(struct pkt_rcd_t *rcv_record, double avg_src_gap, int co
 		}
 	}
 
-	if (debug)
+	if (debug_client)
 		printf("b_gap = %f %f %f \n", b_gap, inc_gap_sum, gap_sum);
 
 	if (gap_sum == 0)
@@ -923,7 +923,7 @@ double get_src_sum(double *times)
 	double sum;
 
 	sum = 0;
-	for (i = 0; i < probe_num - 1; i++)
+	for (i = 0; i < probe_num_client - 1; i++)
 		sum += (times[i + 1] - times[i]);
 	return sum;
 }
@@ -941,18 +941,18 @@ void get_bandwidth()
 }
 
 /* one complete probing procedure, which includes:			*/
-/* 1. send out packets with (probe_num, packet_size, delay_num)  	*/
+/* 1. send out packets with (probe_num_client, packet_size, delay_num)  	*/
 /* 2. retrieve the dst gaps values from dst machine			*/
 /* 3. filter out those bad trace data and compute the src gap & dst 	*/
 /*    gap summary and average						*/
 void one_phase_probing()
 {
-	if (verbose)
-		printf("\nprobe_num = %d packet_size = %d delay_num = %d \n",
-			   probe_num, packet_size, delay_num);
+	if (verbose_client)
+		printf("\nprobe_num_client = %d packet_size = %d delay_num = %d \n",
+			   probe_num_client, packet_size, delay_num);
 
 	/* probing */
-	send_packets(probe_num, packet_size, delay_num, send_times);
+	send_packets(probe_num_client, packet_size, delay_num, send_times);
 	if (trace_fp != NULL)
 	{
 		/* create a new trace item */
@@ -973,8 +973,8 @@ void one_phase_probing()
 	total_count = get_dst_gaps((struct pkt_rcd_t *)&dst_gap);
 
 	/* compute avg_src_gap */
-	src_gap_count = probe_num - 1;
-	if (debug)
+	src_gap_count = probe_num_client - 1;
+	if (debug_client)
 		printf("src_gap_count = %d \n", src_gap_count);
 
 	src_gap_sum = get_src_sum(send_times);
@@ -986,7 +986,7 @@ void one_phase_probing()
 	/* compute avg_dst_gap */
 	dst_gap_sum = get_dst_sum((struct pkt_rcd_t *)&dst_gap,
 							  total_count, &dst_gap_count);
-	if (debug)
+	if (debug_client)
 		printf("%d dst_gap_count = %d \n", total_count, dst_gap_count);
 
 	if (dst_gap_count != 0)
@@ -998,7 +998,7 @@ void one_phase_probing()
 	tlt_src_gap += avg_src_gap;
 	tlt_dst_gap += avg_dst_gap;
 
-	if (verbose)
+	if (verbose_client)
 		printf("gaps (us): %5.0f %5.0f | %5.0f %5.0f\n",
 			   tlt_src_gap * 1000000, tlt_dst_gap * 1000000,
 			   avg_src_gap * 1000000, avg_dst_gap * 1000000);
@@ -1007,12 +1007,12 @@ void one_phase_probing()
 	{
 		double tmp1, tmp2, tmp3;
 
-		cur_trace->probe_num = probe_num;
+		cur_trace->probe_num_client = probe_num_client;
 		cur_trace->packet_size = packet_size;
 		cur_trace->delay_num = delay_num;
 
 		memcpy(cur_trace->send_times, send_times,
-			   sizeof(double) * probe_num);
+			   sizeof(double) * probe_num_client);
 
 		cur_trace->avg_src_gap = avg_src_gap;
 		cur_trace->avg_dst_gap = avg_dst_gap;
@@ -1062,7 +1062,7 @@ void n_phase_probing(int n)
 	PTR_bw = packet_size * 8 * phase_num / tlt_dst_gap;
 	a_bw = b_bw - c_bw[(int)(n / 2)];
 
-	if (verbose)
+	if (verbose_client)
 		printf("------------------------------------------------------\n");
 }
 
@@ -1072,7 +1072,7 @@ int gap_comp(double dst_gap, double src_gap)
 
 	if (dst_gap < src_gap / (1 + delta))
 	{
-		if (verbose)
+		if (verbose_client)
 			printf("smaller dst_gap, considered to be equal \n");
 		return 0;
 	}
@@ -1089,7 +1089,7 @@ void fast_probing()
 	double interval, pre_gap = 0;
 	double saved_ptr, saved_abw;
 
-	probing_start_time = get_time();
+	probing_start_time = get_time_client();
 
 	delay_num = 0;
 	n_phase_probing(phase_num);
@@ -1116,7 +1116,7 @@ void fast_probing()
 		}
 		else
 		{
-			if (double_check && verbose)
+			if (double_check && verbose_client)
 				printf("DISCARD: gap = %d\n", (int)(tlt_dst_gap * 1000000));
 			double_check = 0;
 		}
@@ -1138,12 +1138,12 @@ void fast_probing()
 	PTR_bw = saved_ptr;
 	a_bw = saved_abw;
 
-	probing_end_time = get_time();
+	probing_end_time = get_time_client();
 	dump_bandwidth();
 }
 
 //int main_client(int argc, char *argv[])
-void main_client()
+double main_client(int phase_num, int probe_num_client, int packet_size, char src_addr, char dst_addr)
 {
 //	int opt;
 //
@@ -1163,11 +1163,11 @@ void main_client()
 //			delay_num = atoi(optarg);
 //			break;
 //		case 'n':
-//			probe_num = atoi(optarg);
-//			if (probe_num > MaxProbeNum)
+//			probe_num_client = atoi(optarg);
+//			if (probe_num_client > MaxProbeNum)
 //			{
-//				probe_num = MaxProbeNum;
-//				printf("probe_num is too large, reset as %d\n", MaxProbeNum);
+//				probe_num_client = MaxProbeNum;
+//				printf("probe_num_client is too large, reset as %d\n", MaxProbeNum);
 //			}
 //			break;
 //		case 's':
@@ -1188,14 +1188,14 @@ void main_client()
 //			designation_src = 1;
 //			break;
 //		case 'd':
-//			debug = 1;
+//			debug_client = 1;
 //			break;
 //		case 'v':
-//			verbose = 1;
+//			verbose_client = 1;
 //			break;
 //		case 'h':
 //		default:
-//			Usage();
+//			Usage_client();
 //		}
 //	}
 //	switch (argc - optind)
@@ -1204,11 +1204,27 @@ void main_client()
 //		strcpy(dst, argv[optind]);
 //		break;
 //	default:
-//		Usage();
+//		Usage_client();
 //	}
 
-    char *test = "localhost";
-    strcpy(dst, test);
+	/* Setting option */
+	if (phase_num > MaxRepeat)
+	{
+		phase_num = MaxRepeat;
+		// printf("phase_num is too large, reset as %d\n", MaxRepeat);
+	}
+	if (probe_num_client > MaxProbeNum)
+	{
+		probe_num_client = MaxProbeNum;
+		//printf("probe_num_client is too large, reset as %d\n", MaxProbeNum);
+	}
+	strcpy(src, src_addr);
+	designation_src = 1;
+
+    // char *test = "localhost";
+    strcpy(dst, dst_addr);
+
+	
 
     printf("-----\n");
 	init_connection();
@@ -1227,8 +1243,9 @@ void main_client()
 		fast_probing();
 
 	/* finishing */
-	cleanup(1);
+	cleanup_client(1);
 
 	// return (0);
+	return PTR_bw / 1000000;
 }
 
