@@ -1139,12 +1139,12 @@ void fast_probing()
 	a_bw = saved_abw;
 
 	probing_end_time = get_time_client();
-	dump_bandwidth();
+	// dump_bandwidth();
 }
 
 //int main_client(int argc, char *argv[])
 //double main_client(int phase_num, int probe_num_client, int packet_size, char src_addr, char dst_addr)
-void main_client()
+double main_client()
 {
 	char *src_addr = "fd00:0:10::241";
 	char *dst_addr = "fd00:0:10::242";
@@ -1244,7 +1244,7 @@ void main_client()
 	{
 		one_phase_probing();
 		get_bandwidth();
-		dump_bandwidth();
+		// dump_bandwidth();
 	}
 	else
 		fast_probing();
@@ -1253,6 +1253,6 @@ void main_client()
 	cleanup_client(1);
 
 	// return (0);
-	//return PTR_bw / 1000000;
+	return PTR_bw / 1000000;
 }
 
