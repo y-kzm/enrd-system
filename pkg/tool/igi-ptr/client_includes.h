@@ -41,4 +41,5 @@ void fast_probing();
 void init_connection();
 void send_packets(int probe_num, int packet_size, int delay_num, double *sent_times);
 double get_dst_sum(struct pkt_rcd_t *rcv_record, int count, int *gap_count);
-double main_client(int phase_num, int probe_num, int packet_size, char src_addr, char dst_addr);
+void main_client();
+//double main_client(int phase_num, int probe_num, int packet_size, char src_addr, char dst_addr);

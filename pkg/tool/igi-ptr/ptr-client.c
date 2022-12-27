@@ -133,7 +133,7 @@ void Usage_client()
 	printf("dst_address     can be either an IP address or a hostname\n\n");
 
 	printf("### IPv6 enabled measurement ###\n");
-	exit(1);
+	//exit(1);
 }
 
 /* combine the sec & usec of record into a real number */
@@ -1143,8 +1143,11 @@ void fast_probing()
 }
 
 //int main_client(int argc, char *argv[])
-double main_client(int phase_num, int probe_num_client, int packet_size, char src_addr, char dst_addr)
+//double main_client(int phase_num, int probe_num_client, int packet_size, char src_addr, char dst_addr)
+void main_client()
 {
+	char *src_addr = "fd00:0:10::241";
+	char *dst_addr = "fd00:0:10::242";
 //	int opt;
 //
 //	while ((opt = getopt(argc, argv, "I:k:l:n:s:p:f:dhv")) != EOF)
@@ -1207,6 +1210,10 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char sr
 //		Usage_client();
 //	}
 
+	phase_num = 60;
+	probe_num_client = 20;
+
+
 	/* Setting option */
 	if (phase_num > MaxRepeat)
 	{
@@ -1246,6 +1253,6 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char sr
 	cleanup_client(1);
 
 	// return (0);
-	return PTR_bw / 1000000;
+	//return PTR_bw / 1000000;
 }
 

@@ -8,6 +8,8 @@ int main()
 {
     printf("This is dummy.\n");
     Usage_client();
+    printf("--------\n");
+    main_client();
     
     return 0;
 }

@@ -7,9 +7,7 @@ package meas_server
 */
 import "C"
 
-
 func EstimateServer() {
-    //C.Usage()
-    C.main_server()
+	//C.Usage()
+	C.main_server()
 }
-
