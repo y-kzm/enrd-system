@@ -589,21 +589,6 @@ void main_server()
 	(int);
 
 	verbose = 0;
-	//while ((opt = getopt(argc, argv, "dhv")) != EOF)
-	//{
-	//	switch (opt)
-	//	{
-	//	case 'd':
-	//		debug = 1;
-	//		break;
-	//	case 'v':
-	//		verbose = 1;
-	//		break;
-	//	case 'h':
-	//	default:
-	//		Usage();
-	//	}
-	//}
 
 	/* Setup signal handler for cleaning up */
 	(void)setsignal(SIGTERM, cleanup);

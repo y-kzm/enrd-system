@@ -1,22 +1,23 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net"
-	"context"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netlink/nl"
 
 	"github.com/y-kzm/enrd-system/api"
-	"github.com/y-kzm/enrd-system/pkg/tool/client"
+	meas_client "github.com/y-kzm/enrd-system/pkg/tool/client"
 )
 
 const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
+
 var (
-	Nic string
+	Nic   string
 	Store []*api.SRInfo
 )
 
@@ -27,7 +28,7 @@ type Server struct {
 // Recieve Configure message
 func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.ConfigureResponse, error) {
 	log.Printf("Called configure procedure")
-	log.Println(in.SrInfo)  // debug
+	log.Println(in.SrInfo) // debug
 	if in.Msg == "go" {
 		// TODO: テーブル名とパスの対応付けをしとく必要あり?>in.SrInfoを覚えとけばOK？Successのときだけ別の変数で記憶しとく？
 		for i, _ := range in.SrInfo {
@@ -36,7 +37,7 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 				log.Print(err)
 				return &api.ConfigureResponse{
 					Status: 1,
-					Msg: "Failed to assign IPv6 address",
+					Msg:    "Failed to assign IPv6 address",
 				}, nil
 			}
 			if err := CreateVRF(in.SrInfo[i].Vrf, in.SrInfo[i].SrcAddr); err != nil {
@@ -44,27 +45,27 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 				log.Print(err)
 				return &api.ConfigureResponse{
 					Status: 1,
-					Msg: "Failed to create VRF",
-				}, nil			
+					Msg:    "Failed to create VRF",
+				}, nil
 			}
 			if err := SEG6EncapRouteAdd(in.SrInfo[i].DstAddr, in.SrInfo[i].Vrf, Nic, in.SrInfo[i].SidList); err != nil {
 				// TODO: Cleanup()
 				log.Print(err)
 				return &api.ConfigureResponse{
 					Status: 1,
-					Msg: "Failed to add seg6 encap route",
-				}, nil					
+					Msg:    "Failed to add seg6 encap route",
+				}, nil
 			}
 		}
 		Store = in.SrInfo
 		return &api.ConfigureResponse{
 			Status: 0,
-			Msg: "Success!!!",
+			Msg:    "Success!!!",
 		}, nil
 	} else {
 		return &api.ConfigureResponse{
 			Status: 1,
-			Msg: "Bad Msg...",
+			Msg:    "Bad Msg...",
 		}, nil
 	}
 }
@@ -72,10 +73,10 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 // Recieve Measure message
 func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.MeasureResponse, error) {
 	log.Printf("Called configure procedure")
-	log.Print(Store) // debug  
+	log.Print(Store) // debug
 	if in.Method == "ptr" {
 		// TODO: 各パスの測定を行う 測定パス数のループ
-		res := meas_client.EstimateClient(60, 20, 700, "a", "b")
+		res := meas_client.EstimateClient(int(in.Param.PacketNum), int(in.Param.RepeatNum), int(in.Param.PacketSize), Store[0].SrcAddr, Store[0].DstAddr)
 		log.Print(res)
 		return &api.MeasureResponse{
 			Status: 0,
@@ -89,9 +90,8 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 	}
 }
 
-
 // Connection to database
-func ConnectDB() (error){
+func ConnectDB() error {
 	db, err := sql.Open("mysql", database)
 	if err != nil {
 		return err
@@ -121,13 +121,12 @@ func ConnectDB() (error){
  */
 // func CleanUp() {}
 
-
 // Addition of Seg6 End route
-/** 
+/**
  * Ex.
  *  ip route add fc00:3::/128 encap seg6local action End dev net0
  */
-func SEG6LocalRouteEndAdd(dst string, dev string) (error) {
+func SEG6LocalRouteEndAdd(dst string, dev string) error {
 	li, err := netlink.LinkByName(dev)
 	if err != nil {
 		return err
@@ -158,14 +157,13 @@ func SEG6LocalRouteEndAdd(dst string, dev string) (error) {
 	return nil
 }
 
-
 // Addition of IPv6 address to a specified interface
-/** 
+/**
  * Ex.
  *  ip addr add fd00:0:172:16:4::12/64 dev net0
  *  ip addr add fc00:3::/64 dev lo
  */
-func IPv6AddrAdd(src string, dev string) (error){
+func IPv6AddrAdd(src string, dev string) error {
 	link, err := netlink.LinkByName(dev)
 	if err != nil {
 		return err
@@ -183,11 +181,11 @@ func IPv6AddrAdd(src string, dev string) (error){
 }
 
 // Creation of VRF per each source address
-/** 
+/**
  * Ex.
  *  ip -6 rule add from fd00:0:172:16:2::5 table 100
  */
-func CreateVRF(vrf int32, src string) (error) {
+func CreateVRF(vrf int32, src string) error {
 	srcIP, srcIPnet, err := net.ParseCIDR(src)
 	if err != nil {
 		return err
@@ -212,18 +210,18 @@ func CreateVRF(vrf int32, src string) (error) {
 }
 
 // Addition of Seg6 Encap route
-/** 
+/**
  * Ex.
  *  ip route add fc00:4::/64 encap seg6 mode encap segs fc00:2::,fc00:3:: dev net0 table 100
  */
-func SEG6EncapRouteAdd(dst string, vrf int32, dev string, sidlist []string) (error) {
+func SEG6EncapRouteAdd(dst string, vrf int32, dev string, sidlist []string) error {
 	var sidList []net.IP
 
 	seg6encap := &netlink.SEG6Encap{Mode: nl.SEG6_IPTUN_MODE_ENCAP}
 	for _, sid := range sidlist {
 		ip, _, err := net.ParseCIDR(sid)
 		if err != nil {
-				return err
+			return err
 		}
 		sidList = append(sidList, ip)
 
@@ -252,14 +250,3 @@ func SEG6EncapRouteAdd(dst string, vrf int32, dev string, sidlist []string) (err
 
 	return netlink.RouteAdd(&route)
 }
-
-
-
-
-
-
-
-
-
-
-

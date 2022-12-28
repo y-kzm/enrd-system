@@ -246,7 +246,7 @@ RETSIGTYPE cleanup_client(int signo)
 		}
 	}
 
-	exit(0);
+	//exit(0);
 }
 
 void quit()
@@ -1143,72 +1143,10 @@ void fast_probing()
 }
 
 //int main_client(int argc, char *argv[])
-//double main_client(int phase_num, int probe_num_client, int packet_size, char src_addr, char dst_addr)
-double main_client()
+double main_client(int phase_num, int probe_num_client, int packet_size, char *src_addr, char *dst_addr)
 {
-	char *src_addr = "fd00:0:10::241";
-	char *dst_addr = "fd00:0:10::242";
-//	int opt;
-//
-//	while ((opt = getopt(argc, argv, "I:k:l:n:s:p:f:dhv")) != EOF)
-//	{
-//		switch ((char)opt)
-//		{
-//		case 'k':
-//			phase_num = atoi(optarg);
-//			if (phase_num > MaxRepeat)
-//			{
-//				phase_num = MaxRepeat;
-//				printf("phase_num is too large, reset as %d\n", MaxRepeat);
-//			}
-//			break;
-//		case 'l':
-//			delay_num = atoi(optarg);
-//			break;
-//		case 'n':
-//			probe_num_client = atoi(optarg);
-//			if (probe_num_client > MaxProbeNum)
-//			{
-//				probe_num_client = MaxProbeNum;
-//				printf("probe_num_client is too large, reset as %d\n", MaxProbeNum);
-//			}
-//			break;
-//		case 's':
-//			packet_size = atoi(optarg);
-//			break;
-//		case 'p':
-//			dst_port = atoi(optarg);
-//			break;
-//		case 'f':
-//			if ((trace_fp = fopen(optarg, "w")) == NULL)
-//			{
-//				printf("tracefile open fails, exits\n");
-//				exit(1);
-//			}
-//			break;
-//		case 'I':
-//			strcpy(src, optarg);
-//			designation_src = 1;
-//			break;
-//		case 'd':
-//			debug_client = 1;
-//			break;
-//		case 'v':
-//			verbose_client = 1;
-//			break;
-//		case 'h':
-//		default:
-//			Usage_client();
-//		}
-//	}
-//	switch (argc - optind)
-//	{
-//	case 1:
-//		strcpy(dst, argv[optind]);
-//		break;
-//	default:
-//		Usage_client();
-//	}
+	//char *src_addr = "fd00:0:10::241";
+	//char *dst_addr = "fd00:0:10::242";
 
 	phase_num = 60;
 	probe_num_client = 20;
