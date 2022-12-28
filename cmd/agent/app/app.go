@@ -76,7 +76,23 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 	log.Print(Store) // debug
 	if in.Method == "ptr" {
 		// TODO: 各パスの測定を行う 測定パス数のループ
-		res := meas_client.EstimateClient(int(in.Param.PacketNum), int(in.Param.RepeatNum), int(in.Param.PacketSize), Store[0].SrcAddr, Store[0].DstAddr)
+		srcIP, _, err := net.ParseCIDR(Store[0].SrcAddr)
+		if err != nil {
+			log.Print(err)
+			return &api.MeasureResponse{
+				Status: 1,
+				Msg:    "Failed to start measurement",
+			}, nil
+		}
+		dstIP, _, err := net.ParseCIDR(Store[0].DstAddr)
+		if err != nil {
+			log.Print(err)
+			return &api.MeasureResponse{
+				Status: 1,
+				Msg:    "Failed to start measurement",
+			}, nil
+		}
+		res := meas_client.EstimateClient(int(in.Param.PacketNum), int(in.Param.RepeatNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
 		log.Print(res)
 		return &api.MeasureResponse{
 			Status: 0,
