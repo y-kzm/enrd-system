@@ -72,7 +72,7 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 
 // Recieve Measure message
 func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.MeasureResponse, error) {
-	log.Printf("Called configure procedure")
+	log.Printf("Called measure procedure")
 	log.Print(Store) // debug
 	if in.Method == "ptr" {
 		// TODO: 各パスの測定を行う 測定パス数のループ
