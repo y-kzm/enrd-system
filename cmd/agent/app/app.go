@@ -209,7 +209,8 @@ func SEG6LocalRouteEndAdd(dst string, dev string) error {
 	if err != nil {
 		return err
 	}
-	dstIP, dstIPnet, err := net.ParseCIDR(dst)
+	// dstIP, dstIPnet, err := net.ParseCIDR(dst)
+	dstIP, _, err := net.ParseCIDR(dst)
 	if err != nil {
 		return err
 	}
@@ -223,8 +224,9 @@ func SEG6LocalRouteEndAdd(dst string, dev string) error {
 	route := netlink.Route{
 		LinkIndex: li.Attrs().Index,
 		Dst: &net.IPNet{
-			IP:   dstIP,
-			Mask: dstIPnet.Mask,
+			IP: dstIP,
+			// Mask: dstIPnet.Mask,
+			Mask: net.CIDRMask(128, 128),
 		},
 		Encap: e,
 	}
