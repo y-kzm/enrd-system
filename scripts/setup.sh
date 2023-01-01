@@ -2,7 +2,7 @@
 MODE=${1}
 ETH=${2}
 if [ $# != 2 ]; then
-        echo "Usage: ./${PROGRAM} [mode]"
+        echo "Usage: ./${PROGRAM} [mode] [Interface]"
         echo "mode: controller, comptue1, ..., compute4"
         exit 0;
 fi
