@@ -133,7 +133,7 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 			// Loop for estimate
 			for i, j := range v {
 				// TODO:
-				query += fmt.Sprintf(`( %d, %f, %s )`, i+1)
+				query += fmt.Sprintf(`( %d, %f, %s )`, i+1, j.estimate, j.timestamp)
 				vals = append(vals, j)
 			}
 			query = query[:len(query)-1]
