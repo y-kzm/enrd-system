@@ -46,7 +46,7 @@ message MeasureResponse {
 
 message SRInfo {
     string src_addr = 1;
-    int32 vrf = 2;
+    int32 vrf = 2;  
     string dst_addr = 3;
     repeated string sid_list = 4;
     string table_name = 5;

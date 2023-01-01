@@ -3,8 +3,10 @@ package app
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/vishvananda/netlink"
@@ -17,9 +19,14 @@ import (
 const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
 
 var (
-	Nic   string
-	Store []*api.SRInfo
+	Nic    string
+	SrInfo []*api.SRInfo
 )
+
+type Result struct {
+	estimate  float64
+	timestamp time.Time
+}
 
 type Server struct {
 	api.UnimplementedServiceServer
@@ -30,7 +37,6 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 	log.Printf("Called configure procedure")
 	log.Println(in.SrInfo) // debug
 	if in.Msg == "go" {
-		// TODO: テーブル名とパスの対応付けをしとく必要あり?>in.SrInfoを覚えとけばOK？Successのときだけ別の変数で記憶しとく？
 		for i, _ := range in.SrInfo {
 			if err := IPv6AddrAdd(in.SrInfo[i].SrcAddr, Nic); err != nil {
 				// TODO: Cleanup()
@@ -57,7 +63,7 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 				}, nil
 			}
 		}
-		Store = in.SrInfo
+		SrInfo = in.SrInfo
 		return &api.ConfigureResponse{
 			Status: 0,
 			Msg:    "Success!!!",
@@ -73,27 +79,83 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 // Recieve Measure message
 func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.MeasureResponse, error) {
 	log.Printf("Called measure procedure")
+	// MAP to store measurement results
+	// res = { compute1_compute2_compute4: [94.1, 95.4, 92.1], compute1_compute3_compute4: [96.1, 93.2, 95.6], ... }
+	res := map[string][]Result{}
 	// log.Print(Store) // debug
 	if in.Method == "ptr" {
-		// TODO: 各パスの測定を行う 測定パス数のループ
-		srcIP, _, err := net.ParseCIDR(Store[0].SrcAddr)
+		// Loop specified measurement times
+		for i := 0; i < int(in.Param.MeasNum); i++ {
+			// Loop the number of measurement paths
+			for j, _ := range SrInfo {
+				srcIP, _, err := net.ParseCIDR(SrInfo[j].SrcAddr)
+				if err != nil {
+					log.Print(err)
+					return &api.MeasureResponse{
+						Status: 1,
+						Msg:    "Failed to measure",
+					}, nil
+				}
+				dstIP, _, err := net.ParseCIDR(SrInfo[j].DstAddr)
+				if err != nil {
+					log.Print(err)
+					return &api.MeasureResponse{
+						Status: 1,
+						Msg:    "Failed to measure",
+					}, nil
+				}
+				meas := meas_client.EstimateClient(int(in.Param.PacketNum), int(in.Param.RepeatNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
+				timestamp, _ := time.Parse(time.RFC3339, "2020-12-02T20:04:05+09:00")
+				res[SrInfo[j].TableName] = append(res[SrInfo[j].TableName], Result{
+					estimate:  meas,
+					timestamp: timestamp,
+				})
+			}
+		}
+		log.Print(res) // debug
+
+		// Store results in database
+		db, err := sql.Open("mysql", database)
 		if err != nil {
 			log.Print(err)
 			return &api.MeasureResponse{
 				Status: 1,
-				Msg:    "Failed to start measurement",
+				Msg:    "Failed to store results",
 			}, nil
 		}
-		dstIP, _, err := net.ParseCIDR(Store[0].DstAddr)
-		if err != nil {
-			log.Print(err)
-			return &api.MeasureResponse{
-				Status: 1,
-				Msg:    "Failed to start measurement",
-			}, nil
+		defer db.Close()
+
+		// INSERT
+		// Loop for tables
+		for k, v := range res {
+			query := "INSERT INTO " + k + " ( cycle, estimate, timestamp ) VALUES "
+			vals := make([]any, 0, len(v))
+			// Loop for estimate
+			for i, j := range v {
+				// TODO:
+				query += fmt.Sprintf(`( %d, %f, %s )`, i+1)
+				vals = append(vals, j)
+			}
+			query = query[:len(query)-1]
+			log.Print(query) // debug
+
+			ins, err := db.Prepare(query)
+			if err != nil {
+				log.Print(err)
+				return &api.MeasureResponse{
+					Status: 1,
+					Msg:    "Failed to store results",
+				}, nil
+			}
+			if _, err := ins.Exec(vals...); err != nil {
+				log.Print(err)
+				return &api.MeasureResponse{
+					Status: 1,
+					Msg:    "Failed to store results",
+				}, nil
+			}
 		}
-		res := meas_client.EstimateClient(int(in.Param.PacketNum), int(in.Param.RepeatNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
-		log.Print(res)
+		// Sucess
 		return &api.MeasureResponse{
 			Status: 0,
 			Msg:    "Success!!!",

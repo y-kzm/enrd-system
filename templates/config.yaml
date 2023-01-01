@@ -14,17 +14,17 @@ config:
     mm_src_node: compute1
     rules:
         - mm_dst_node: compute4
-          mm_src_addr: fd00:0:10::ffff:1/64
+          mm_src_addr: fd00:0:172:16::ffff:1/64
           vrf: 100
           transit_nodes:
             - compute2
         - mm_dst_node: compute4
-          mm_src_addr: fd00:0:10::ffff:2/64
+          mm_src_addr: fd00:0:172:16::ffff:2/64
           vrf: 101
           transit_nodes:
             - compute3 
         - mm_dst_node: compute4
-          mm_src_addr: fd00:0:10::ffff:3/64
+          mm_src_addr: fd00:0:172:16::ffff:3/64
           vrf: 102
           transit_nodes:
             - compute2
