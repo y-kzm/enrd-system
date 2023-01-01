@@ -279,7 +279,7 @@ func CreateVRF(vrf int32, src string) error {
 	rule := netlink.NewRule()
 	rule.Table = int(vrf)
 	rule.Src = srcNet
-	rule.Priority = 5
+	// rule.Priority = 5
 	if err := netlink.RuleAdd(rule); err != nil {
 		return err
 	}

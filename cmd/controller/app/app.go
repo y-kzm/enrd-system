@@ -24,7 +24,8 @@ import (
 
 // Need to change in production environment
 const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
-//const database = "enrd:0ta29SourC3@tcp(localhost:3306)/enrd"
+
+// const database = "enrd:0ta29SourC3@tcp(localhost:3306)/enrd"
 const port = 52000
 const pathTable = "path_info"
 
@@ -34,9 +35,8 @@ type PathInfo struct {
 	num  int
 }
 
-
 // Send configuration infomation
-func ConfigureRequest(host string, sr []*api.SRInfo) (error){
+func ConfigureRequest(host string, sr []*api.SRInfo) error {
 	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
@@ -63,9 +63,8 @@ func ConfigureRequest(host string, sr []*api.SRInfo) (error){
 	return nil
 }
 
-
 // Send measurement request
-func MeasureRequest(host string, method string, param *api.Param) (error){
+func MeasureRequest(host string, method string, param *api.Param) error {
 	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
@@ -78,7 +77,7 @@ func MeasureRequest(host string, method string, param *api.Param) (error){
 
 	r, err := c.Measure(ctx, &api.MeasureRequest{
 		Method: method,
-		Param: param,
+		Param:  param,
 	})
 	if err != nil {
 		return err
@@ -154,7 +153,7 @@ func CmdInit(c *cli.Context) error {
 	}
 	defer res.Close()
 
-	// Creation of path_info table 
+	// Creation of path_info table
 	_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + pathTable + " ( id varchar(40) PRIMARY KEY, path varchar(64), num smallint unsigned ) ")
 	if err != nil {
 		return err
@@ -174,7 +173,7 @@ func CmdConf(c *cli.Context) error {
 	}
 	// fmt.Println(erconfig.Config.Rules)  // debug
 
-	// Memorize mapping between host name and SID 
+	// Memorize mapping between host name and SID
 	pair := make(map[string]string)
 	for _, i := range erconfig.Nodes {
 		pair[i.Host] = i.SID
@@ -224,7 +223,7 @@ func CmdConf(c *cli.Context) error {
 			return err
 		}
 
-		// Create a measurement result table for each measurement path 
+		// Create a measurement result table for each measurement path
 		_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + path_str + " ( cycle int unsigned PRIMARY KEY, estimate float, timestamp datetime ) ")
 		if err != nil {
 			return err
@@ -237,12 +236,11 @@ func CmdConf(c *cli.Context) error {
 			sid_list = append(sid_list, pair[erconfig.Config.Rules[i].TransitNodes[j]])
 		}
 
-
 		sr = append(sr, &api.SRInfo{
-			SrcAddr: erconfig.Config.Rules[i].SrcAddr,
-			Vrf: erconfig.Config.Rules[i].VRF,
-			DstAddr: pair[erconfig.Config.Rules[i].DstNode],
-			SidList: sid_list, 
+			SrcAddr:   erconfig.Config.Rules[i].SrcAddr,
+			Vrf:       erconfig.Config.Rules[i].VRF,
+			DstAddr:   pair[erconfig.Config.Rules[i].DstNode],
+			SidList:   sid_list,
 			TableName: path_str,
 		})
 	}
@@ -263,13 +261,13 @@ func CmdEstimate(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(param.Param) // debug
+	// fmt.Println(param.Param) // debug
 
 	pm := api.Param{
-		PacketNum: param.Param.PacketNum,
-		PacketSize: param.Param.PacketSize,
-		RepeatNum: param.Param.RepeatNum,
-		MeasNum: param.Param.MeasNum,
+		PacketNum:   param.Param.PacketNum,
+		PacketSize:  param.Param.PacketSize,
+		RepeatNum:   param.Param.RepeatNum,
+		MeasNum:     param.Param.MeasNum,
 		SmaInterval: param.Param.SmaInterval,
 	}
 
@@ -289,7 +287,7 @@ func CmdEstimate(c *cli.Context) error {
 }
 
 // Display of template files
-func PrintTemplate(filename string) (error){
+func PrintTemplate(filename string) error {
 	fmt.Print("------------------- " + filename + "\n")
 	f, err := os.Open("./templates/" + filename)
 	if err != nil {

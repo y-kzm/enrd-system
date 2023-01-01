@@ -6,7 +6,7 @@ if [ $# != 1 ]; then
         exit 0;
 fi
 
-elif [ ${MODE} = "compute1" -o ${MODE} = "com1" ]; then
+if [ ${MODE} = "compute1" -o ${MODE} = "com1" ]; then
         ip -6 rule del from fd00:0:172:16::ffff:1/64
         ip -6 rule del from fd00:0:172:16::ffff:2/64
         ip -6 rule del from fd00:0:172:16::ffff:3/64
