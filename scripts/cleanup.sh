@@ -20,22 +20,22 @@ if [ ${MODE} = "compute1" -o ${MODE} = "com1" ]; then
         ip addr del fd00:0:172:16:ffff::2/64 dev ${ETH}
         ip addr del fd00:0:172:16:ffff::3/64 dev ${ETH}
 
-        ip addr del fc00:1::/64 dev lo
+        ip addr del fc00:1::1/64 dev lo
         ip route del fc00:1::/64
 
         ip route del fc00:1::1 encap seg6local action End dev ${ETH} metric 1024 pref medium
 elif [ ${MODE} = "compute2" -o ${MODE} = "com2" ]; then
-        ip addr del fc00:2::/64 dev lo
+        ip addr del fc00:2::1/64 dev lo
         ip route del fc00:2::/64
 
         ip route del fc00:2::1 encap seg6local action End dev ${ETH} metric 1024 pref medium
 elif [ ${MODE} = "compute3" -o ${MODE} = "com3" ]; then
-        ip addr del fc00:3::/64 dev lo
+        ip addr del fc00:3::1/64 dev lo
         ip route del fc00:3::/64
 
         ip route del fc00:3::1 encap seg6local action End dev ${ETH} metric 1024 pref medium
 elif [ ${MODE} = "compute4" -o ${MODE} = "com4" ]; then
-        ip addr del fc00:4::/64 dev lo
+        ip addr del fc00:4::1/64 dev lo
         ip route del fc00:4::/64
         
         ip route del fc00:4::1 encap seg6local action End dev ${ETH} metric 1024 pref medium
