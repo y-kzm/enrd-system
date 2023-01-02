@@ -28,7 +28,12 @@ elif [ ${MODE} = "compute4" -o ${MODE} = "com4" ]; then
     ip addr del fc00:4::/64 dev lo
     ip route del fc00:4:: encap seg6local action End dev ${ETH} 
 
-elif [ ${MODE} = "config" ]; then
+else
+    echo "Not supported"
+    exit 0;
+fi
+
+if [ ${MODE} = "compute1" -o ${MODE} = "com1" ]; then
     echo "----------------------------------------"
     ip -6 rule del from fd00:0:172:16:ffff::1/64
     ip -6 rule del from fd00:0:172:16:ffff::2/64
@@ -43,7 +48,7 @@ elif [ ${MODE} = "config" ]; then
     ip addr del fd00:0:172:16:ffff::3/64 dev ${ETH}
 
 else
-    echo "Not supported"
+    echo "Nothing..."
     exit 0;
 fi
 
