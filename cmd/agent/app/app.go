@@ -79,8 +79,7 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 // Recieve Measure message
 func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.MeasureResponse, error) {
 	log.Printf("Called measure procedure")
-	// MAP to store measurement results
-	// res = { compute1_compute2_compute4: [94.1, 95.4, 92.1], compute1_compute3_compute4: [96.1, 93.2, 95.6], ... }
+	// MAP to store measurement results: res = { compute1_compute2_compute4: [94.1, 95.4, 92.1], compute1_compute3_compute4: [96.1, 93.2, 95.6], ... }
 	res := map[string][]Result{}
 	// log.Print(Store) // debug
 	if in.Method == "ptr" {
@@ -105,7 +104,8 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 					}, nil
 				}
 				log.Print("Start measure") // debug
-				meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
+				// meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
+				meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), string(srcIP), string(dstIP))
 				log.Print(res) // debug
 				timestamp, _ := time.Parse(time.RFC3339, "2020-12-02T20:04:05+09:00")
 				res[SrInfo[j].TableName] = append(res[SrInfo[j].TableName], Result{
