@@ -1,7 +1,7 @@
 #!/bin/bash
 #MODE=${1}
 ETH=${1}
-MODE=`username`
+MODE=`hostname`
 
 if [ $# != 1 ]; then
         echo "Usage: ./${PROGRAM} [Interface]"
@@ -30,9 +30,9 @@ elif [ ${MODE} = "compute4" -o ${MODE} = "com4" ]; then
 
 elif [ ${MODE} = "config" ]; then
     echo "----------------------------------------"
-    ip -6 rule del from fd00:0:172:16:ffff::1
-    ip -6 rule del from fd00:0:172:16:ffff::2
-    ip -6 rule del from fd00:0:172:16:ffff::3
+    ip -6 rule del from fd00:0:172:16:ffff::1/64
+    ip -6 rule del from fd00:0:172:16:ffff::2/64
+    ip -6 rule del from fd00:0:172:16:ffff::3/64
 
     ip -6 route del fc00:4::/64 encap seg6 mode encap segs fc00:2:: dev ${ETH} table 100 
     ip -6 route del fc00:4::/64 encap seg6 mode encap segs fc00:3:: dev ${ETH} table 101 

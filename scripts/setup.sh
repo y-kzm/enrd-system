@@ -1,7 +1,7 @@
 #!/bin/bash
 #MODE=${1}
 ETH=${1}
-MODE=`username`
+MODE=`hostname`
 
 if [ $# != 1 ]; then
         echo "Usage: ./${PROGRAM} [Interface]"

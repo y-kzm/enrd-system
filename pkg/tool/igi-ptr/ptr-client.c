@@ -1165,10 +1165,12 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char *s
     // char *test = "localhost";
     strcpy(dst, dst_addr);
 
+	dst_port = 10241;
+
     printf("-----\n");
 	printf("Read parameter\n");
-	printf("phase_num: %d, probe_num: %d, packet_size: %d, src: %s, dst: %s \n",
-				phase_num, probe_num_client, packet_size, src_addr, dst_addr);
+	printf("phase_num: %d, probe_num: %d, packet_size: %d, src: %s, dst: %s , dst_port: %u \n",
+				phase_num, probe_num_client, packet_size, src_addr, dst_addr, dst_port);
 
 	init_connection();
 	/* allow dst 2 seconds to start up the packet filter */
