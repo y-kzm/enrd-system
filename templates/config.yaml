@@ -1,13 +1,13 @@
 # SID Information
 nodes:
     - host: compute1 
-      sid: fc00:1::1/64
+      sid: fc00:1::/64
     - host: compute2 
-      sid: fc00:2::1/64
+      sid: fc00:2::/64
     - host: compute3 
-      sid: fc00:3::1/64
+      sid: fc00:3::/64
     - host: compute4 
-      sid: fc00:4::1/64
+      sid: fc00:4::/64
 
 # System Infomation
 config:
