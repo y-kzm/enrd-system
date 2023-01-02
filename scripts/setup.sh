@@ -1,9 +1,10 @@
 #!/bin/bash
-MODE=${1}
-ETH=${2}
-if [ $# != 2 ]; then
-        echo "Usage: ./${PROGRAM} [mode] [Interface]"
-        echo "mode: controller, comptue1, ..., compute4"
+#MODE=${1}
+ETH=${1}
+MODE=`username`
+
+if [ $# != 1 ]; then
+        echo "Usage: ./${PROGRAM} [Interface]"
         exit 0;
 fi
 
