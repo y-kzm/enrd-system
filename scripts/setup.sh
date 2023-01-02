@@ -8,12 +8,16 @@ if [ $# != 2 ]; then
 fi
 
 if [ ${MODE} = "controller" -o ${MODE} = "con" ]; then
+    echo "----------------------------------------"
     echo "Nothing..."
     # ip route add fc00:1::/64 via fd00:0:172:16::2:4 dev ${ETH}
     # ip route add fc00:2::/64 via fd00:0:172:16::4:11 dev ${ETH}
     # ip route add fc00:3::/64 via fd00:0:172:16::4:12 dev ${ETH}
     # ip route add fc00:4::/64 via fd00:0:172:16::5:11 dev ${ETH}
 elif [ ${MODE} = "compute1" -o ${MODE} = "com1" ]; then
+    bash -c "enable_seg6_router.py | sh"
+    echo "----------------------------------------"
+
     #ip route add fc00:1::/64 via fd00:0:172:16::2:4 dev ${ETH}
     ip route add fc00:2::/64 via fd00:0:172:16:4::11 dev ${ETH}
     ip route add fc00:3::/64 via fd00:0:172:16:4::12 dev ${ETH}
@@ -21,8 +25,10 @@ elif [ ${MODE} = "compute1" -o ${MODE} = "com1" ]; then
     
     ip addr add fc00:1::/64 dev lo
     ip route add fc00:1:: encap seg6local action End dev ${ETH}
-    #ip -6 route add fc00:1::1 encap seg6local action End.DX6 nh6 :: dev lo
+
 elif [ ${MODE} = "compute2" -o ${MODE} = "com2" ]; then
+    bash -c "enable_seg6_router.py | sh"
+    echo "----------------------------------------"
     ip route add fc00:1::/64 via fd00:0:172:16:2::4 dev ${ETH}
     #ip route add fc00:2::/64 via fd00:0:172:16::4:11 dev ${ETH}
     ip route add fc00:3::/64 via fd00:0:172:16:4::12 dev ${ETH}
@@ -30,8 +36,10 @@ elif [ ${MODE} = "compute2" -o ${MODE} = "com2" ]; then
 
     ip addr add fc00:2::/64 dev lo
     ip route add fc00:2:: encap seg6local action End dev ${ETH}
-    #ip -6 route add fc00:2::1 encap seg6local action End.DX6 nh6 :: dev lo
+
 elif [ ${MODE} = "compute3" -o ${MODE} = "com3" ]; then
+    bash -c "enable_seg6_router.py | sh"
+    echo "----------------------------------------"
     ip route add fc00:1::/64 via fd00:0:172:16:2::4 dev ${ETH}
     ip route add fc00:2::/64 via fd00:0:172:16:4::11 dev ${ETH}
     #ip route add fc00:3::/64 via fd00:0:172:16::4:12 dev ${ETH}
@@ -39,8 +47,10 @@ elif [ ${MODE} = "compute3" -o ${MODE} = "com3" ]; then
 
     ip addr add fc00:3::/64 dev lo
     ip route add fc00:3:: encap seg6local action End dev ${ETH}
-    #ip -6 route add fc00:3::1 encap seg6local action End.DX6 nh6 :: dev lo
+
 elif [ ${MODE} = "compute4" -o ${MODE} = "com4" ]; then
+    bash -c "enable_seg6_router.py | sh"
+    echo "----------------------------------------"
     ip route add fc00:1::/64 via fd00:0:172:16:2::4 dev ${ETH}
     ip route add fc00:2::/64 via fd00:0:172:16:4::11 dev ${ETH}
     ip route add fc00:3::/64 via fd00:0:172:16:4::12 dev ${ETH}
@@ -48,9 +58,9 @@ elif [ ${MODE} = "compute4" -o ${MODE} = "com4" ]; then
 
     ip addr add fc00:4::/64 dev lo
     ip route add fc00:4:: encap seg6local action End dev ${ETH}
-    #ip -6 route add fc00:4::1 encap seg6local action End.DX6 nh6 :: dev lo
 
 elif [ ${MODE} = "config" ]; then
+    echo "----------------------------------------"
     ip addr add fd00:0:172:16:ffff::1/64 dev ${ETH}
     ip addr add fd00:0:172:16:ffff::2/64 dev ${ETH}
     ip addr add fd00:0:172:16:ffff::3/64 dev ${ETH}
@@ -69,9 +79,9 @@ else
 fi
 
 echo "-------------------------"
-ip -6 route show table all
+ip -6 rule show
 echo "-------------------------"
-ip -6 route show
+ip -6 route show table all
 echo "-------------------------"
 ip addr show lo
 ip addr show ${ETH}
