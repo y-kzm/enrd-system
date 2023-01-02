@@ -105,7 +105,7 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 					}, nil
 				}
 				log.Print("Start measure") // debug
-				meas := meas_client.EstimateClient(int(in.Param.PacketNum), int(in.Param.RepeatNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
+				meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
 				log.Print(res) // debug
 				timestamp, _ := time.Parse(time.RFC3339, "2020-12-02T20:04:05+09:00")
 				res[SrInfo[j].TableName] = append(res[SrInfo[j].TableName], Result{

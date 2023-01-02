@@ -1148,10 +1148,6 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char *s
 	//char *src_addr = "fd00:0:10::241";
 	//char *dst_addr = "fd00:0:10::242";
 
-	phase_num = 60;
-	probe_num_client = 20;
-
-
 	/* Setting option */
 	if (phase_num > MaxRepeat)
 	{
@@ -1172,7 +1168,8 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char *s
 	
 
     printf("-----\n");
-	printf("phase_num: %d, probe_num_client: %d, packet_size: %d, src: %s, dst: %s \n",
+	printf("Read parameter\n";)
+	printf("phase_num: %d, probe_num: %d, packet_size: %d, src: %s, dst: %s \n",
 				phase_num, probe_num_client, packet_size, src_addr, dst_addr);
 
 	init_connection();
