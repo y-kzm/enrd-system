@@ -1172,6 +1172,9 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char *s
 	
 
     printf("-----\n");
+	printf("phase_num: %d, probe_num_client: %d, packet_size: %d, src: %s, dst: %s \n",
+				phase_num, probe_num_client, packet_size, src_addr, dst_addr);
+
 	init_connection();
 	/* allow dst 2 seconds to start up the packet filter */
 	sleep(2);
