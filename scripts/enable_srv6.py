@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+
 # Reference: https://github.com/slankdev/Dockerfiles/blob/master/ubuntu/18.10/enable_seg6_router.py
+# Usage: ./enable_seg6_router.py | sudo sh
+
 import os
 
 print('#!/bin/sh')
