@@ -104,10 +104,11 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 						Msg:    "Failed to measure",
 					}, nil
 				}
-				log.Print("Start measure") // debug
+				log.Printf("Start measurement") // debug
 				meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
-				log.Println(meas) // debug
-				timestamp, _ := time.Parse(time.RFC3339, "2020-12-02T20:04:05+09:00")
+				log.Printf("Result: %3f", meas) // debug
+				timestamp := time.Now()
+				log.Println(timestamp)
 				res[j.TableName] = append(res[j.TableName], Result{
 					estimate:  meas,
 					timestamp: timestamp,
