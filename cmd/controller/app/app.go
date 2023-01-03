@@ -274,10 +274,8 @@ func CmdEstimate(c *cli.Context) error {
 	}
 
 	// TODO: 指定の区間の移動平均を計算して標準出力
-	// { compute1_compute2_compute4: [96.7, 94.3, 89.0], ... }
-	// 測定パス分のループ (path_infoテーブルから取得)
-	// 指定区間分のデータがあるかどうかチェック > 無ければあるだけの数に変更
 
+	// Get path information
 	db, err := sql.Open("mysql", database)
 	if err != nil {
 		fmt.Println(err)
@@ -285,21 +283,91 @@ func CmdEstimate(c *cli.Context) error {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT * FROM " + pathTable)
+	rows, err := db.Query("SELECT path FROM " + pathTable)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
 	defer rows.Close()
 
+	var path []string
 	for rows.Next() {
-		var table string
-		err := rows.Scan(&table)
+		var tmp string
+		err := rows.Scan(&tmp)
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
-		fmt.Println(table)
+		path = append(path, tmp)
+	}
+	err = rows.Err()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	// Loop for path information
+	for _, j := range path {
+		// Get number of data
+		rows, err := db.Query("SELECT COUNT(*) FROM " + j)
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		defer rows.Close()
+
+		var num int
+		for rows.Next() {
+			err := rows.Scan(&num)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+		}
+		err = rows.Err()
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		// Update moving average interval
+		if num < int(pm.SmaInterval) {
+			pm.SmaInterval = int32(num)
+		}
+
+		// Get data for moving average interval
+		rows, err = db.Query("SELECT * FROM " + j + "ORDER BY time_stamp DESC LIMIT " + strconv.Itoa(int(pm.SmaInterval)))
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		defer rows.Close()
+
+		var result []float64
+		for rows.Next() {
+			var tmp float64
+			err := rows.Scan(&tmp)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+			result = append(result, tmp)
+		}
+		err = rows.Err()
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		// Calculate moving averages
+		var sum float64
+		sum = 0
+		for _, value := range result {
+			sum += value
+		}
+		fmt.Printf("%s: %3f\n", j, sum/float64(len(result)))
+
+		// 最初と最後のdateを出力する
 	}
 
 	return nil
@@ -329,7 +397,7 @@ func PrintTemplate(filename string) error {
 func spinner(delay time.Duration) {
 	for {
 		for _, r := range `-\|/` {
-			fmt.Printf("Processing...\r%c ", r)
+			fmt.Printf("[\r%c] Processing...", r)
 			time.Sleep(delay)
 		}
 	}
