@@ -1,7 +1,5 @@
 package app
 
-// TODO: log.Faitalの廃止
-
 import (
 	"context"
 	"database/sql"
@@ -22,17 +20,15 @@ import (
 	"github.com/y-kzm/enrd-system/pkg/shell"
 )
 
-// Need to change in production environment
+// const database = "enrd:0ta29SourC3@tcp(localhost:3306)/enrd"
 const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
 
-// const database = "enrd:0ta29SourC3@tcp(localhost:3306)/enrd"
 const port = 52000
 const pathTable = "path_info"
 
 type PathInfo struct {
 	id   string
 	path string
-	num  int
 }
 
 // Send configuration infomation
@@ -65,15 +61,14 @@ func ConfigureRequest(host string, sr []*api.SRInfo) error {
 
 // Send measurement request
 func MeasureRequest(host string, method string, param *api.Param) error {
-	// conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 	c := api.NewServiceClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*90)
 	defer cancel()
 
 	r, err := c.Measure(ctx, &api.MeasureRequest{
@@ -155,7 +150,7 @@ func CmdInit(c *cli.Context) error {
 	defer res.Close()
 
 	// Creation of path_info table
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + pathTable + " ( id varchar(40) PRIMARY KEY, path varchar(64), num smallint unsigned ) ")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + pathTable + " ( id varchar(40) PRIMARY KEY, path varchar(64) ) ")
 	if err != nil {
 		return err
 	}
@@ -209,17 +204,17 @@ func CmdConf(c *cli.Context) error {
 		path_arr := erconfig.Config.Rules[i].TransitNodes                     // [ Compute2, Compute3 ]
 		path_arr = append([]string{erconfig.Config.SrcNode}, path_arr[0:]...) // [ Compute1, Compute2, Compute3 ]
 		path_arr = append(path_arr, erconfig.Config.Rules[i].DstNode)         // [ Compute1, Compute2, Compute3, Compute4 ]
-		path_str := strings.Join(path_arr, "_")                               // "Compute1->Compute2->Compute3->Compute4"
+		path_str := strings.Join(path_arr, "_")                               // "Compute1_Compute2_Compute3_Compute4"
 
-		path = append(path, &PathInfo{uuid_str, path_str, 0})
+		path = append(path, &PathInfo{uuid_str, path_str})
 
 		// Insert Execution
-		ins, err := db.Prepare("INSERT INTO " + pathTable + " (id,path,num) VALUES(?,?,?)")
+		ins, err := db.Prepare("INSERT INTO " + pathTable + " ( id, path ) VALUES( ?, ? )")
 		if err != nil {
 			return err
 		}
 		defer ins.Close()
-		_, err = ins.Exec(path[i].id, path[i].path, path[i].num)
+		_, err = ins.Exec(path[i].id, path[i].path)
 		if err != nil {
 			return err
 		}
@@ -228,7 +223,6 @@ func CmdConf(c *cli.Context) error {
 		_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + path_str + " ( cycle int unsigned PRIMARY KEY, estimate float, timestamp datetime ) ")
 		if err != nil {
 			return err
-
 		}
 
 		// Convert host name to SID (IPv6 address format)
@@ -256,6 +250,7 @@ func CmdConf(c *cli.Context) error {
 // Estimate command
 func CmdEstimate(c *cli.Context) error {
 	fmt.Fprint(os.Stdout, "***** estimate command! *****\n")
+	go spinner(100 * time.Millisecond)
 
 	// Parse yaml and store in structure array
 	_, param, err := LoadCfgStruct(c, "param")
@@ -305,4 +300,13 @@ func PrintTemplate(filename string) error {
 	}
 
 	return nil
+}
+
+func spinner(delay time.Duration) {
+	for {
+		for _, r := range `-\|/` {
+			fmt.Printf("\r%c", r)
+			time.Sleep(delay)
+		}
+	}
 }

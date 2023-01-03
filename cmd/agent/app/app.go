@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -117,8 +116,6 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 			}
 		}
 		log.Println(res) // debug
-
-		os.Exit(1) // debug
 
 		// Store results in database
 		db, err := sql.Open("mysql", database)
