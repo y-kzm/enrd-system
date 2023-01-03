@@ -107,7 +107,7 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 				}
 				log.Printf("----- Start measurement -----")
 				meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
-				log.Printf("Result: %3f", meas) // debug
+				log.Printf("%s: %3f", j.TableName, meas) // debug
 				timestamp := time.Now()
 				// log.Println(timestamp) // debug
 				res[j.TableName] = append(res[j.TableName], Result{

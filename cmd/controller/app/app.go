@@ -12,6 +12,7 @@ import (
 	"github.com/briandowns/spinner"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
@@ -158,6 +159,7 @@ func CmdInit(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("Done")
 	s.Stop()
 
 	return nil
@@ -300,7 +302,7 @@ func CmdEstimate(c *cli.Context) error {
 	}
 	defer rows.Close()
 
-	var path []string
+	var path_info []string
 	for rows.Next() {
 		var tmp string
 		err := rows.Scan(&tmp)
@@ -308,7 +310,7 @@ func CmdEstimate(c *cli.Context) error {
 			fmt.Println(err)
 			return err
 		}
-		path = append(path, tmp)
+		path_info = append(path_info, tmp)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -317,7 +319,8 @@ func CmdEstimate(c *cli.Context) error {
 	}
 
 	// Loop for path information
-	for _, j := range path {
+	res := map[string]float64{}
+	for _, j := range path_info {
 		// Get number of data
 		rows, err := db.Query("SELECT COUNT(*) FROM " + j)
 		if err != nil {
@@ -326,9 +329,9 @@ func CmdEstimate(c *cli.Context) error {
 		}
 		defer rows.Close()
 
-		var num int
+		var num_record int
 		for rows.Next() {
-			err := rows.Scan(&num)
+			err := rows.Scan(&num_record)
 			if err != nil {
 				fmt.Println(err)
 				return err
@@ -341,8 +344,8 @@ func CmdEstimate(c *cli.Context) error {
 		}
 
 		// Update moving average interval
-		if num < int(pm.SmaInterval) {
-			pm.SmaInterval = int32(num)
+		if num_record < int(pm.SmaInterval) {
+			pm.SmaInterval = int32(num_record)
 		}
 
 		// Get data for moving average interval
@@ -353,7 +356,7 @@ func CmdEstimate(c *cli.Context) error {
 		}
 		defer rows.Close()
 
-		var result []float64
+		var estimation []float64
 		for rows.Next() {
 			var tmp float64
 			err := rows.Scan(&tmp)
@@ -361,7 +364,7 @@ func CmdEstimate(c *cli.Context) error {
 				fmt.Println(err)
 				return err
 			}
-			result = append(result, tmp)
+			estimation = append(estimation, tmp)
 		}
 		err = rows.Err()
 		if err != nil {
@@ -372,13 +375,23 @@ func CmdEstimate(c *cli.Context) error {
 		// Calculate moving averages
 		var sum float64
 		sum = 0
-		for _, value := range result {
+		for _, value := range estimation {
 			sum += value
 		}
-		fmt.Printf("%s: %3f\n", j, sum/float64(len(result)))
-
+		res[j] = sum / float64(len(estimation))
 		// 最初と最後のdateを出力する
 	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Paths", "Estimation"})
+
+	for i, j := range res {
+		var v []string
+		v = append(v, i)
+		v = append(v, strconv.FormatFloat(j, 'f', 2, 64))
+		table.Append(v)
+	}
+	table.Render()
 
 	return nil
 }
