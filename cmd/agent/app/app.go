@@ -1,6 +1,7 @@
 package app
 
 // TODO: 自身のマシン名を取得してparam.yamlから付与すべきPrefix-SIDを読み取る
+// TODO: gRPCサーバの正常終了処理
 
 import (
 	"context"
@@ -137,8 +138,8 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 			vals := make([]any, 0, len(v))
 			// Loop for estimate
 			for i, j := range v {
-				// TODO:
-				query += fmt.Sprintf(`( %d, %f, '%s' )`, i+1, j.estimate, j.timestamp)
+				// TODO: valsに構造体appendしてる...
+				query += fmt.Sprintf(`( %d, %f, '%s' ),`, i+1, j.estimate, j.timestamp.Format("2006-01-02 15:04:05"))
 				vals = append(vals, j)
 			}
 			query = query[:len(query)-1]

@@ -130,6 +130,7 @@ func CmdTemp(c *cli.Context) error {
 // Init command
 func CmdInit(c *cli.Context) error {
 	fmt.Fprint(os.Stdout, "***** Init Command *****\n")
+	go spinner(100 * time.Millisecond)
 
 	db, err := sql.Open("mysql", database)
 	if err != nil {
