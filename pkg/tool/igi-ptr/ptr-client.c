@@ -113,6 +113,31 @@ struct trace_item *trace_list = NULL;
 struct trace_item *trace_tail = NULL;
 struct trace_item *cur_trace = NULL;
 
+void init_param()
+{
+	delay_num = 0;
+   packet_size = PacketSize;
+   phase_num = 3;
+   probe_num_client = ProbeNum;
+   verbose_client = 0;
+   debug_client = 0;
+   designation_src = 0;
+
+   b_bw = 0;
+   competing_bw = 0;
+   PTR_bw = 0;
+   a_bw = 0;
+   // c_bw[MaxRepeat];
+   probing_phase_count = 0;
+   probing_start_time = 0;
+   probing_end_time = 0;
+
+   src_gap_sum = 0; // entry value
+   trace_list = NULL;
+   trace_tail = NULL;
+   cur_trace = NULL;
+}
+
 /* usage message */
 void Usage_client()
 {
@@ -1148,6 +1173,8 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char *s
 	//char *src_addr = "fd00:0:10::241";
 	//char *dst_addr = "fd00:0:10::242";
 
+	init_param();
+
 	/* Setting option */
 	if (phase_num > MaxRepeat)
 	{
@@ -1167,6 +1194,7 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char *s
 
 	// TODO: A stopgap measure
 	dst_port = 10240;
+	PTR_bw = 0;
 
     printf("-----\n");
 	printf(" > phase_num: %d, probe_num: %d, packet_size: %d, src: %s, dst: %s , start_dst_port: %u \n",
@@ -1189,7 +1217,7 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char *s
 	/* finishing */
 	cleanup_client(1);
 
-	printf("\nPTR: %7.3f Mpbs (suggested)\n", PTR_bw / 1000000);
+	// printf("\nPTR: %7.3f Mpbs (suggested)\n", PTR_bw / 1000000);
 
 	// return (0);
 	return PTR_bw / 1000000;

@@ -17,6 +17,7 @@
 #include "common.h"
 
 void Usage_client();
+void init_param();
 double get_rcd_time(struct pkt_rcd_t record);
 void dump_trace();
 void quit();
