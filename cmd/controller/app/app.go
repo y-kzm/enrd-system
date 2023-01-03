@@ -336,7 +336,7 @@ func CmdEstimate(c *cli.Context) error {
 		}
 
 		// Get data for moving average interval
-		rows, err = db.Query("SELECT * FROM " + j + "ORDER BY time_stamp DESC LIMIT " + strconv.Itoa(int(pm.SmaInterval)))
+		rows, err = db.Query("SELECT estimation FROM " + j + " ORDER BY time_stamp DESC LIMIT " + strconv.Itoa(int(pm.SmaInterval)))
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -397,7 +397,7 @@ func PrintTemplate(filename string) error {
 func spinner(delay time.Duration) {
 	for {
 		for _, r := range `-\|/` {
-			fmt.Printf("[\r%c] Processing...", r)
+			fmt.Printf("\r[%c] Processing...\n", r)
 			time.Sleep(delay)
 		}
 	}
