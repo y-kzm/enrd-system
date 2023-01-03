@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/briandowns/spinner"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
@@ -130,7 +131,10 @@ func CmdTemp(c *cli.Context) error {
 // Init command
 func CmdInit(c *cli.Context) error {
 	fmt.Printf("***** Init Command *****\n")
-	go spinner(100 * time.Millisecond)
+	s := spinner.New(spinner.CharSets[34], 100*time.Millisecond)
+	go s.Start()
+	// time.Sleep(4 * time.Second)
+	// s.Stop()
 
 	db, err := sql.Open("mysql", database)
 	if err != nil {
@@ -162,7 +166,10 @@ func CmdInit(c *cli.Context) error {
 // Conf command
 func CmdConf(c *cli.Context) error {
 	fmt.Printf("***** Config Command *****\n")
-	go spinner(100 * time.Millisecond)
+	s := spinner.New(spinner.CharSets[34], 100*time.Millisecond)
+	go s.Start()
+	// time.Sleep(4 * time.Second)
+	// s.Stop()
 
 	// Parsing yaml files
 	erconfig, _, err := LoadCfgStruct(c, "config")
@@ -252,7 +259,10 @@ func CmdConf(c *cli.Context) error {
 // Estimate command
 func CmdEstimate(c *cli.Context) error {
 	fmt.Printf("***** Estimate command *****\n")
-	go spinner(100 * time.Millisecond)
+	s := spinner.New(spinner.CharSets[34], 100*time.Millisecond)
+	go s.Start()
+	// time.Sleep(4 * time.Second)
+	// s.Stop()
 
 	// Parse yaml and store in structure array
 	_, param, err := LoadCfgStruct(c, "param")
@@ -391,14 +401,4 @@ func PrintTemplate(filename string) error {
 	}
 
 	return nil
-}
-
-// Display of load spinner
-func spinner(delay time.Duration) {
-	for {
-		for _, r := range `-\|/` {
-			fmt.Printf("\r[%c] Processing...\n", r)
-			time.Sleep(delay)
-		}
-	}
 }
