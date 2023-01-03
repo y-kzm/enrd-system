@@ -129,7 +129,7 @@ func CmdTemp(c *cli.Context) error {
 
 // Init command
 func CmdInit(c *cli.Context) error {
-	fmt.Fprint(os.Stdout, "***** Init Command *****\n")
+	fmt.Printf("***** Init Command *****\n")
 	go spinner(100 * time.Millisecond)
 
 	db, err := sql.Open("mysql", database)
@@ -161,7 +161,7 @@ func CmdInit(c *cli.Context) error {
 
 // Conf command
 func CmdConf(c *cli.Context) error {
-	fmt.Fprint(os.Stdout, "***** Config Command *****\n")
+	fmt.Printf("***** Config Command *****\n")
 	go spinner(100 * time.Millisecond)
 
 	// Parsing yaml files
@@ -222,7 +222,7 @@ func CmdConf(c *cli.Context) error {
 		}
 
 		// Create a measurement result table for each measurement path
-		_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + path_str + " ( cycle int unsigned PRIMARY KEY, estimate float, timestamp datetime ) ")
+		_, err = db.Exec("CREATE TABLE IF NOT EXISTS " + path_str + " ( num_meas int unsigned PRIMARY KEY, estimation float, time_stamp datetime ) ")
 		if err != nil {
 			return err
 		}
@@ -251,7 +251,7 @@ func CmdConf(c *cli.Context) error {
 
 // Estimate command
 func CmdEstimate(c *cli.Context) error {
-	fmt.Fprint(os.Stdout, "***** Estimate command *****\n")
+	fmt.Printf("***** Estimate command *****\n")
 	go spinner(100 * time.Millisecond)
 
 	// Parse yaml and store in structure array
@@ -273,20 +273,41 @@ func CmdEstimate(c *cli.Context) error {
 		return err
 	}
 
-	// TODO: パス情報テーブルからレコードを検索
-	// 存在しない場合はエラー
-	// 存在すればOK & 計測テーブルここで作る？
+	// TODO: 指定の区間の移動平均を計算して標準出力
+	// { compute1_compute2_compute4: [96.7, 94.3, 89.0], ... }
+	// 測定パス分のループ (path_infoテーブルから取得)
+	// 指定区間分のデータがあるかどうかチェック > 無ければあるだけの数に変更
 
-	// gRPCフォーマットにテーブル名(UUID)を追加する必要がある  ****重要****
-	// path_infoから検索してくる必要あり "->"でいい感じに連結してくれる関数を作るべき
-	// https://stackoverflow.com/questions/36344826/how-do-i-represent-a-uuid-in-a-protobuf-message
+	db, err := sql.Open("mysql", database)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT * FROM " + pathTable)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var table string
+		err := rows.Scan(&table)
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		fmt.Println(table)
+	}
 
 	return nil
 }
 
 // Display of template files
 func PrintTemplate(filename string) error {
-	fmt.Print("------------------- " + filename + "\n")
+	fmt.Println("------------------- " + filename + "\n")
 	f, err := os.Open("./templates/" + filename)
 	if err != nil {
 		return err

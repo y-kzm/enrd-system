@@ -18,14 +18,15 @@ import (
 const port = 52000
 
 func main() {
+	// TODO: 自身のマシン名を取得してparam.yamlから付与すべきPrefix-SIDを読み取る
 	// Argument check
 	if len(os.Args) != 3 {
 		fmt.Fprintf(os.Stderr, "Usage: ./agent [InterfaceName] [SID]\n")
 		os.Exit(1)
 	}
 	app.Nic = os.Args[1]
-	log.Printf("Interface: %s", os.Args[1])
-	log.Printf("Prefix-SID: %s", os.Args[2])
+	log.Printf("Interface: %s (Execute the function)", os.Args[1])
+	log.Printf("Prefix-SID: %s (Assigned to loopback)", os.Args[2])
 
 	// Connecting to the database
 	if err := app.ConnectDB(); err != nil {
@@ -51,7 +52,6 @@ func main() {
 	}
 
 	// Startup of IGI/PTR server
-	// TODO: エラー処理
 	go meas_server.EstimateServer()
 	log.Print("Startup of IGI/PTR server")
 

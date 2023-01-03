@@ -1,6 +1,5 @@
 package app
 
-// TODO: 自身のマシン名を取得してparam.yamlから付与すべきPrefix-SIDを読み取る
 // TODO: gRPCサーバの正常終了処理
 
 import (
@@ -69,7 +68,7 @@ func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.
 		SrInfo = in.SrInfo
 		return &api.ConfigureResponse{
 			Status: 0,
-			Msg:    "Success!!!",
+			Msg:    "Success",
 		}, nil
 	} else {
 		return &api.ConfigureResponse{
@@ -106,11 +105,11 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 						Msg:    "Failed to measure",
 					}, nil
 				}
-				log.Printf("Start measurement") // debug
+				log.Printf("----- Start measurement -----")
 				meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
 				log.Printf("Result: %3f", meas) // debug
 				timestamp := time.Now()
-				log.Println(timestamp)
+				// log.Println(timestamp) // debug
 				res[j.TableName] = append(res[j.TableName], Result{
 					estimate:  meas,
 					timestamp: timestamp,
@@ -134,26 +133,16 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 		// Store the results to database
 		// Loop for tables
 		for k, v := range res {
-			query := "INSERT INTO " + k + " ( cycle, estimate, timestamp ) VALUES "
-			vals := make([]any, 0, len(v))
+			query := "INSERT INTO " + k + " ( num_meas, estimation, time_stamp ) VALUES "
 			// Loop for estimate
 			for i, j := range v {
-				// TODO: valsに構造体appendしてる...
 				query += fmt.Sprintf(`( %d, %f, '%s' ),`, i+1, j.estimate, j.timestamp.Format("2006-01-02 15:04:05"))
-				vals = append(vals, j)
 			}
 			query = query[:len(query)-1]
 			log.Println(query) // debug
 
-			ins, err := db.Prepare(query)
-			if err != nil {
-				log.Print(err)
-				return &api.MeasureResponse{
-					Status: 1,
-					Msg:    "Failed to prepare",
-				}, nil
-			}
-			if _, err := ins.Exec(vals...); err != nil {
+			// TODO: インジェクションへの対処
+			if _, err := db.Exec(query); err != nil {
 				log.Print(err)
 				return &api.MeasureResponse{
 					Status: 1,
@@ -161,11 +150,13 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 				}, nil
 			}
 		}
+
 		// Sucess
 		return &api.MeasureResponse{
 			Status: 0,
-			Msg:    "Success!!!",
+			Msg:    "Success",
 		}, nil
+
 	} else {
 		return &api.MeasureResponse{
 			Status: 1,
