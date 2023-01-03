@@ -5,8 +5,10 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	"github.com/y-kzm/enrd-system/api"
 	"github.com/y-kzm/enrd-system/cmd/agent/app"
@@ -60,7 +62,21 @@ func main() {
 		// TODO: Cleanup()
 		os.Exit(1)
 	}
-	s := grpc.NewServer()
+
+	enforcement := keepalive.EnforcementPolicy{
+		MinTime:             5 * time.Second,
+		PermitWithoutStream: true,
+	}
+
+	s := grpc.NewServer(
+		grpc.KeepaliveEnforcementPolicy(enforcement),
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionAge:      10 * time.Second,
+			MaxConnectionAgeGrace: 30 * time.Second,
+		}),
+	)
+
+	// s := grpc.NewServer()
 	api.RegisterServiceServer(s, &app.Server{})
 	log.Printf("Server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
