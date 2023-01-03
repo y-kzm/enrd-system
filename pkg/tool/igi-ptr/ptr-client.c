@@ -1189,6 +1189,8 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char *s
 	/* finishing */
 	cleanup_client(1);
 
+	printf("\nPTR: %7.3f Mpbs (suggested)\n", PTR_bw / 1000000);
+
 	// return (0);
 	return PTR_bw / 1000000;
 }
