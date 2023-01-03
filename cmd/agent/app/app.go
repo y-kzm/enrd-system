@@ -117,7 +117,7 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 				time.Sleep(time.Second * 1)
 			}
 		}
-		log.Println(res) // debug
+		// log.Println(res) // debug
 
 		// Store results in database
 		db, err := sql.Open("mysql", database+"?parseTime=true")
@@ -125,12 +125,12 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 			log.Print(err)
 			return &api.MeasureResponse{
 				Status: 1,
-				Msg:    "Failed to store results",
+				Msg:    "Failed to open mysql",
 			}, nil
 		}
 		defer db.Close()
 
-		// INSERT
+		// Store the results to database
 		// Loop for tables
 		for k, v := range res {
 			query := "INSERT INTO " + k + " ( cycle, estimate, timestamp ) VALUES "
@@ -138,25 +138,25 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 			// Loop for estimate
 			for i, j := range v {
 				// TODO:
-				query += fmt.Sprintf(`( %d, %f, %s )`, i+1, j.estimate, j.timestamp)
+				query += fmt.Sprintf(`( %d, %f, '%s' )`, i+1, j.estimate, j.timestamp)
 				vals = append(vals, j)
 			}
 			query = query[:len(query)-1]
-			log.Print(query) // debug
+			log.Println(query) // debug
 
 			ins, err := db.Prepare(query)
 			if err != nil {
 				log.Print(err)
 				return &api.MeasureResponse{
 					Status: 1,
-					Msg:    "Failed to store results",
+					Msg:    "Failed to prepare",
 				}, nil
 			}
 			if _, err := ins.Exec(vals...); err != nil {
 				log.Print(err)
 				return &api.MeasureResponse{
 					Status: 1,
-					Msg:    "Failed to store results",
+					Msg:    "Failed to execute",
 				}, nil
 			}
 		}
