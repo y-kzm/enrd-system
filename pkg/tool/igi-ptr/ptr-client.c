@@ -60,7 +60,7 @@ int packet_size = PacketSize;
 int phase_num = 3;
 int probe_num_client = ProbeNum;
 FILE *trace_fp = NULL;
-int verbose_client = 1;
+int verbose_client = 0;
 int debug_client = 0;
 int designation_src = 0;
 

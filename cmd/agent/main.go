@@ -10,7 +10,7 @@ import (
 
 	"github.com/y-kzm/enrd-system/api"
 	"github.com/y-kzm/enrd-system/cmd/agent/app"
-	"github.com/y-kzm/enrd-system/pkg/tool/server"
+	meas_server "github.com/y-kzm/enrd-system/pkg/tool/server"
 )
 
 const port = 52000
@@ -22,12 +22,13 @@ func main() {
 		os.Exit(1)
 	}
 	app.Nic = os.Args[1]
-	log.Printf("Interface: %s SID: %s", os.Args[1], os.Args[2])
+	log.Printf("Interface: %s", os.Args[1])
+	log.Printf("Prefix-SID: %s", os.Args[2])
 
 	// Connecting to the database
 	if err := app.ConnectDB(); err != nil {
 		log.Print("Failed to connect to database")
-		os.Exit(1)		
+		os.Exit(1)
 	}
 
 	// TODO: Cleanup()
@@ -65,6 +66,6 @@ func main() {
 	if err := s.Serve(lis); err != nil {
 		log.Printf("Failed to serve: %v", err)
 		// TODO: Cleanup()
-		os.Exit(1)		
+		os.Exit(1)
 	}
 }

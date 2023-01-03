@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -83,15 +84,11 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 	res := map[string][]Result{}
 	// log.Print(Store) // debug
 	if in.Method == "ptr" {
-		srcIP, _, err := net.ParseCIDR(SrInfo[0].SrcAddr)
-		dstIP, _, err := net.ParseCIDR(SrInfo[0].DstAddr)
-		meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
-		/*--
 		// Loop specified measurement times
 		for i := 0; i < int(in.Param.MeasNum); i++ {
 			// Loop the number of measurement paths
-			for j, _ := range SrInfo {
-				srcIP, _, err := net.ParseCIDR(SrInfo[j].SrcAddr)
+			for _, j := range SrInfo {
+				srcIP, _, err := net.ParseCIDR(j.SrcAddr)
 				if err != nil {
 					log.Print(err)
 					return &api.MeasureResponse{
@@ -99,7 +96,7 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 						Msg:    "Failed to measure",
 					}, nil
 				}
-				dstIP, _, err := net.ParseCIDR(SrInfo[j].DstAddr)
+				dstIP, _, err := net.ParseCIDR(j.DstAddr)
 				if err != nil {
 					log.Print(err)
 					return &api.MeasureResponse{
@@ -109,17 +106,18 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 				}
 				log.Print("Start measure") // debug
 				meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
-				log.Print(res) // debug
+				log.Println(meas) // debug
 				timestamp, _ := time.Parse(time.RFC3339, "2020-12-02T20:04:05+09:00")
-				res[SrInfo[j].TableName] = append(res[SrInfo[j].TableName], Result{
+				res[j.TableName] = append(res[j.TableName], Result{
 					estimate:  meas,
 					timestamp: timestamp,
 				})
+				time.Sleep(time.Second * 1)
 			}
 		}
-		*/
-		// log.Print(res) // debug
-		log.Print(meas) // debug
+		log.Println(res) // debug
+
+		os.Exit(1) // debug
 
 		// Store results in database
 		db, err := sql.Open("mysql", database)
