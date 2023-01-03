@@ -85,10 +85,7 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 	if in.Method == "ptr" {
 		srcIP, _, err := net.ParseCIDR(SrInfo[0].SrcAddr)
 		dstIP, _, err := net.ParseCIDR(SrInfo[0].DstAddr)
-		log.Println(srcIP)
-		log.Println(dstIP)
-		// meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
-		meas := meas_client.EstimateClient(20, 60, 700, "fd00:0:172:16:ffff::1", "fc00:4::")
+		meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
 		/*--
 		// Loop specified measurement times
 		for i := 0; i < int(in.Param.MeasNum); i++ {

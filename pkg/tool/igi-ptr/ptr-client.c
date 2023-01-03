@@ -60,8 +60,8 @@ int packet_size = PacketSize;
 int phase_num = 3;
 int probe_num_client = ProbeNum;
 FILE *trace_fp = NULL;
-int verbose_client = 0;
-int debug_client = 1;
+int verbose_client = 1;
+int debug_client = 0;
 int designation_src = 0;
 
 double b_bw = 0, competing_bw, PTR_bw, a_bw, c_bw[MaxRepeat];
@@ -1165,8 +1165,11 @@ double main_client(int phase_num, int probe_num_client, int packet_size, char *s
     // char *test = "localhost";
     strcpy(dst, dst_addr);
 
+	// TODO: A stopgap measure
+	dst_port = 10240;
+
     printf("-----\n");
-	printf("Read parameter\n");
+	printf("Read parameters\n");
 	printf("phase_num: %d, probe_num: %d, packet_size: %d, src: %s, dst: %s , start_dst_port: %u \n",
 				phase_num, probe_num_client, packet_size, src_addr, dst_addr, dst_port);
 
