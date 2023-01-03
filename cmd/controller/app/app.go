@@ -65,7 +65,8 @@ func ConfigureRequest(host string, sr []*api.SRInfo) error {
 
 // Send measurement request
 func MeasureRequest(host string, method string, param *api.Param) error {
-	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		return err
 	}
