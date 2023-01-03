@@ -116,7 +116,7 @@ func LoadCfgStruct(c *cli.Context, filename string) (erconfig shell.ErConfig, er
 
 // Temp command
 func CmdTemp(c *cli.Context) error {
-	// TODO: パスに依存しない形に
+	// TODO: パス依存
 	if err := PrintTemplate("config.yaml"); err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func CmdTemp(c *cli.Context) error {
 
 // Init command
 func CmdInit(c *cli.Context) error {
-	fmt.Fprint(os.Stdout, "***** Init Command! *****\n")
+	fmt.Fprint(os.Stdout, "***** Init Command *****\n")
 
 	db, err := sql.Open("mysql", database)
 	if err != nil {
@@ -160,7 +160,8 @@ func CmdInit(c *cli.Context) error {
 
 // Conf command
 func CmdConf(c *cli.Context) error {
-	fmt.Fprint(os.Stdout, "***** Config Command! *****\n")
+	fmt.Fprint(os.Stdout, "***** Config Command *****\n")
+	go spinner(100 * time.Millisecond)
 
 	// Parsing yaml files
 	erconfig, _, err := LoadCfgStruct(c, "config")
@@ -249,7 +250,7 @@ func CmdConf(c *cli.Context) error {
 
 // Estimate command
 func CmdEstimate(c *cli.Context) error {
-	fmt.Fprint(os.Stdout, "***** estimate command! *****\n")
+	fmt.Fprint(os.Stdout, "***** Estimate command *****\n")
 	go spinner(100 * time.Millisecond)
 
 	// Parse yaml and store in structure array
@@ -302,10 +303,11 @@ func PrintTemplate(filename string) error {
 	return nil
 }
 
+// Display of load spinner
 func spinner(delay time.Duration) {
 	for {
 		for _, r := range `-\|/` {
-			fmt.Printf("\r%c", r)
+			fmt.Printf("Processing...\r%c ", r)
 			time.Sleep(delay)
 		}
 	}

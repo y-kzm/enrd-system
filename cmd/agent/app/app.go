@@ -1,5 +1,7 @@
 package app
 
+// TODO: 自身のマシン名を取得してparam.yamlから付与すべきPrefix-SIDを読み取る
+
 import (
 	"context"
 	"database/sql"
@@ -118,7 +120,7 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 		log.Println(res) // debug
 
 		// Store results in database
-		db, err := sql.Open("mysql", database)
+		db, err := sql.Open("mysql", database+"?parseTime=true")
 		if err != nil {
 			log.Print(err)
 			return &api.MeasureResponse{
