@@ -132,9 +132,8 @@ func CmdTemp(c *cli.Context) error {
 func CmdInit(c *cli.Context) error {
 	fmt.Printf("***** Init Command *****\n")
 	s := spinner.New(spinner.CharSets[34], 100*time.Millisecond)
-	go s.Start()
+	s.Start()
 	// time.Sleep(4 * time.Second)
-	// s.Stop()
 
 	db, err := sql.Open("mysql", database)
 	if err != nil {
@@ -159,6 +158,7 @@ func CmdInit(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	s.Stop()
 
 	return nil
 }
@@ -169,7 +169,6 @@ func CmdConf(c *cli.Context) error {
 	s := spinner.New(spinner.CharSets[34], 100*time.Millisecond)
 	go s.Start()
 	// time.Sleep(4 * time.Second)
-	// s.Stop()
 
 	// Parsing yaml files
 	erconfig, _, err := LoadCfgStruct(c, "config")
@@ -252,6 +251,7 @@ func CmdConf(c *cli.Context) error {
 	if err := ConfigureRequest(erconfig.Config.SrcNode, sr); err != nil {
 		return err
 	}
+	s.Stop()
 
 	return nil
 }
@@ -262,7 +262,6 @@ func CmdEstimate(c *cli.Context) error {
 	s := spinner.New(spinner.CharSets[34], 100*time.Millisecond)
 	go s.Start()
 	// time.Sleep(4 * time.Second)
-	// s.Stop()
 
 	// Parse yaml and store in structure array
 	_, param, err := LoadCfgStruct(c, "param")
@@ -284,6 +283,7 @@ func CmdEstimate(c *cli.Context) error {
 	}
 
 	// TODO: 指定の区間の移動平均を計算して標準出力
+	s.Stop()
 
 	// Get path information
 	db, err := sql.Open("mysql", database)
