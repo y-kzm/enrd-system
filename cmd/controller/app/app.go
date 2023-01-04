@@ -430,8 +430,8 @@ func CmdEstimate(c *cli.Context) error {
 	}
 	table.Render()
 
-	fmt.Printf("Note: Estimation are averages of the %d recent data \n", pm.SmaInterval)
-	fmt.Printf("Suggest: %s %2f \n", max.key, max.value)
+	fmt.Printf("Note:    Estimation are averages of the %d recent data \n", pm.SmaInterval)
+	fmt.Printf("Suggest: %s %.2f \n", max.key, max.value)
 
 	return nil
 }

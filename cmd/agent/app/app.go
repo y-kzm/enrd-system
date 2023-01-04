@@ -34,6 +34,8 @@ type Server struct {
 	api.UnimplementedServiceServer
 }
 
+var Number = map[string]int{}
+
 // Recieve Configure message
 func (s *Server) Configure(ctx context.Context, in *api.ConfigureRequest) (*api.ConfigureResponse, error) {
 	log.Printf("Called configure procedure")
@@ -106,9 +108,9 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 					}, nil
 				}
 				log.Printf("----- Start measurement -----")
+				timestamp := time.Now()
 				meas := meas_client.EstimateClient(int(in.Param.RepeatNum), int(in.Param.PacketNum), int(in.Param.PacketSize), srcIP.String(), dstIP.String())
 				log.Printf("%s: %3f", j.TableName, meas) // debug
-				timestamp := time.Now()
 				// log.Println(timestamp) // debug
 				res[j.TableName] = append(res[j.TableName], Result{
 					estimate:  meas,
@@ -135,8 +137,9 @@ func (s *Server) Measure(ctx context.Context, in *api.MeasureRequest) (*api.Meas
 		for k, v := range res {
 			query := "INSERT INTO " + k + " ( num_meas, estimation, time_stamp ) VALUES "
 			// Loop for estimate
-			for i, j := range v {
-				query += fmt.Sprintf(`( %d, %f, '%s' ),`, i+1, j.estimate, j.timestamp.Format("2006-01-02 15:04:05"))
+			for _, j := range v {
+				Number[k] += 1
+				query += fmt.Sprintf(`( %d, %f, '%s' ),`, Number[k], j.estimate, j.timestamp.Format("2006-01-02 15:04:05"))
 			}
 			query = query[:len(query)-1]
 			log.Println(query) // debug
