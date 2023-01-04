@@ -33,6 +33,23 @@ type PathInfo struct {
 	path string
 }
 
+type TempInfo struct {
+	key   string
+	value float64
+}
+
+type SelectInfo struct {
+	estimation float64
+	date       time.Time
+}
+
+type ResInfo struct {
+	key        string
+	value      float64
+	first_date time.Time
+	last_date  time.Time
+}
+
 // Send configuration infomation
 func ConfigureRequest(host string, sr []*api.SRInfo) error {
 	conn, err := grpc.Dial(host+":"+strconv.Itoa(port), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -288,7 +305,7 @@ func CmdEstimate(c *cli.Context) error {
 	s.Stop()
 
 	// Get path information
-	db, err := sql.Open("mysql", database)
+	db, err := sql.Open("mysql", database+"?parseTime=true")
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -319,17 +336,16 @@ func CmdEstimate(c *cli.Context) error {
 	}
 
 	// Loop for path information
-	res := map[string]float64{}
-	for _, j := range path_info {
+	res := []ResInfo{}
+	for i, j := range path_info { // [ compute1_compute2_compute4, compute1_compute3_compute4, ... ]
 		// Get number of data
+		var num_record int
 		rows, err := db.Query("SELECT COUNT(*) FROM " + j)
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
 		defer rows.Close()
-
-		var num_record int
 		for rows.Next() {
 			err := rows.Scan(&num_record)
 			if err != nil {
@@ -342,29 +358,27 @@ func CmdEstimate(c *cli.Context) error {
 			fmt.Println(err)
 			return err
 		}
-
 		// Update moving average interval
 		if num_record < int(pm.SmaInterval) {
 			pm.SmaInterval = int32(num_record)
 		}
 
 		// Get data for moving average interval
-		rows, err = db.Query("SELECT estimation FROM " + j + " ORDER BY time_stamp DESC LIMIT " + strconv.Itoa(int(pm.SmaInterval)))
+		slct := []SelectInfo{}
+		rows, err = db.Query("SELECT estimation, time_stamp FROM " + j + " ORDER BY time_stamp DESC LIMIT " + strconv.Itoa(int(pm.SmaInterval)))
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
 		defer rows.Close()
-
-		var estimation []float64
 		for rows.Next() {
-			var tmp float64
-			err := rows.Scan(&tmp)
+			tmp := SelectInfo{}
+			err := rows.Scan(&tmp.estimation, &tmp.date)
 			if err != nil {
 				fmt.Println(err)
 				return err
 			}
-			estimation = append(estimation, tmp)
+			slct = append(slct, tmp)
 		}
 		err = rows.Err()
 		if err != nil {
@@ -374,24 +388,45 @@ func CmdEstimate(c *cli.Context) error {
 
 		// Calculate moving averages
 		var sum float64
+		var first_date, last_date time.Time
 		sum = 0
-		for _, value := range estimation {
-			sum += value
+		for _, v := range slct {
+			sum += v.estimation
+			if v.date.Before(first_date) {
+				first_date = v.date
+			}
+			if v.date.After(last_date) {
+				last_date = v.date
+			}
 		}
-		res[j] = sum / float64(len(estimation))
-		// 最初と最後のdateを出力する
+		res[i].key = j
+		res[i].value = sum / float64(len(slct))
+		res[i].first_date = first_date
+		res[i].last_date = last_date
 	}
 
+	// Finally, stdout the results
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Paths", "Estimation"})
-
-	for i, j := range res {
+	table.SetHeader([]string{"Path", "Estimation", "First_Date", "Last_Date"})
+	max := TempInfo{
+		key:   "",
+		value: 0,
+	}
+	for _, j := range res {
+		if max.value < j.value {
+			max.value = j.value
+			max.key = j.key
+		}
 		var v []string
-		v = append(v, i)
-		v = append(v, strconv.FormatFloat(j, 'f', 2, 64))
+		v = append(v, j.key)
+		v = append(v, strconv.FormatFloat(j.value, 'f', 2, 64))
+		v = append(v, j.first_date.Format("2006-01-02 03:04:05"))
+		v = append(v, j.last_date.Format("2006-01-02 03:04:05"))
 		table.Append(v)
 	}
 	table.Render()
+
+	fmt.Printf("Suggest: %s [%2f] \n", max.key, max.value)
 
 	return nil
 }
