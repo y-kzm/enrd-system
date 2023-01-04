@@ -176,7 +176,7 @@ func CmdInit(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Done")
+	fmt.Printf("Done\n")
 	s.Stop()
 
 	return nil
@@ -337,7 +337,7 @@ func CmdEstimate(c *cli.Context) error {
 
 	// Loop for path information
 	res := []ResInfo{}
-	for i, j := range path_info { // [ compute1_compute2_compute4, compute1_compute3_compute4, ... ]
+	for _, j := range path_info { // [ compute1_compute2_compute4, compute1_compute3_compute4, ... ]
 		// Get number of data
 		var num_record int
 		rows, err := db.Query("SELECT COUNT(*) FROM " + j)
@@ -389,6 +389,8 @@ func CmdEstimate(c *cli.Context) error {
 		// Calculate moving averages
 		var sum float64
 		var first_date, last_date time.Time
+		first_date = slct[0].date
+		last_date = slct[0].date
 		sum = 0
 		for _, v := range slct {
 			sum += v.estimation
@@ -399,10 +401,12 @@ func CmdEstimate(c *cli.Context) error {
 				last_date = v.date
 			}
 		}
-		res[i].key = j
-		res[i].value = sum / float64(len(slct))
-		res[i].first_date = first_date
-		res[i].last_date = last_date
+		res = append(res, ResInfo{
+			key:        j,
+			value:      sum / float64(len(slct)),
+			first_date: first_date,
+			last_date:  last_date,
+		})
 	}
 
 	// Finally, stdout the results
@@ -426,7 +430,8 @@ func CmdEstimate(c *cli.Context) error {
 	}
 	table.Render()
 
-	fmt.Printf("Suggest: %s [%2f] \n", max.key, max.value)
+	fmt.Printf("Note: Estimation are averages of the %d recent data \n", pm.SmaInterval)
+	fmt.Printf("Suggest: %s %2f \n", max.key, max.value)
 
 	return nil
 }

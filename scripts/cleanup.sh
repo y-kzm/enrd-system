@@ -46,10 +46,6 @@ if [ ${MODE} = "compute1" -o ${MODE} = "com1" ]; then
     ip addr del fd00:0:172:16:ffff::1/64 dev ${ETH}
     ip addr del fd00:0:172:16:ffff::2/64 dev ${ETH}
     ip addr del fd00:0:172:16:ffff::3/64 dev ${ETH}
-
-else
-    echo "Nothing..."
-    exit 0;
 fi
 
 echo "-------------------------"
