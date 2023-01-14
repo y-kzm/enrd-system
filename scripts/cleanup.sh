@@ -18,9 +18,9 @@ if [ ${MODE} = "compute1" -o ${MODE} = "com1" ]; then
     ip -6 rule del from fd00:0:172:16:ffff::2/64
     ip -6 rule del from fd00:0:172:16:ffff::3/64
 
-    ip -6 route del fc00:4::/64 encap seg6 mode encap segs fc00:2:: dev ${ETH} table 100 
-    ip -6 route del fc00:4::/64 encap seg6 mode encap segs fc00:3:: dev ${ETH} table 101 
-    ip -6 route del fc00:4::/64 encap seg6 mode encap segs fc00:2::,fc00:3:: dev ${ETH} table 102
+    ip -6 route del fc00:4::/64 encap seg6 dev ${ETH} table 100 
+    ip -6 route del fc00:4::/64 encap seg6 dev ${ETH} table 101 
+    ip -6 route del fc00:4::/64 encap seg6 dev ${ETH} table 102
 
     ip addr del fd00:0:172:16:ffff::1/64 dev ${ETH}
     ip addr del fd00:0:172:16:ffff::2/64 dev ${ETH}
