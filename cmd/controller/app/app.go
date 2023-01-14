@@ -22,8 +22,7 @@ import (
 	"github.com/y-kzm/enrd-system/pkg/shell"
 )
 
-// const database = "enrd:0ta29SourC3@tcp(localhost:3306)/enrd"
-const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
+const database = "enrd:PASSWORD@tcp(controller:3306)/enrd"
 
 const port = 52000
 const pathTable = "path_info"
@@ -160,7 +159,10 @@ func CmdInit(c *cli.Context) error {
 	defer db.Close()
 
 	// Delete all tables
-	res, _ := db.Query("SHOW TABLES")
+	res, err := db.Query("SHOW TABLES")
+	if err != nil {
+		return err
+	}
 	var table string
 	for res.Next() {
 		res.Scan(&table)
@@ -199,7 +201,8 @@ func CmdConf(c *cli.Context) error {
 	// Memorize mapping between host name and SID
 	pair := make(map[string]string)
 	for _, i := range erconfig.Nodes {
-		pair[i.Host] = i.SID
+		// pair[i.Host] = i.SID
+		pair[i.Host] = i.Locator
 	}
 
 	// Check for existing table

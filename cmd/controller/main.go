@@ -10,7 +10,7 @@ import (
 
 const (
 	name        = "enrd"
-	description = "Estimating available bandwidth using SRv6"
+	description = "Estimation of network resource status for Dataflow platform management"
 )
 
 var (
@@ -33,7 +33,7 @@ func newApp() *cli.App {
 	app.Usage = description
 	app.Authors = []*cli.Author{
 		{
-			Name:  "yykzm",
+			Name:  "Kazuma Yokoo",
 			Email: "yokoo@v6.netsci.info.hiroshima-cu.ac.jp",
 		},
 	}

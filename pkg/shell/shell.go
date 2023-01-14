@@ -8,8 +8,9 @@ type ErConfig struct {
 }
 
 type Node struct {
-	Host string `yaml:"host"`
-	SID  string `yaml:"sid"`
+	Host    string `yaml:"host"`
+	Locator string `yaml:"locator"`
+	SID     string `yaml:"node-sid"`
 }
 
 type Config struct {
@@ -20,7 +21,7 @@ type Config struct {
 type Rule struct {
 	DstNode      string   `yaml:"mm_dst_node" mapstructure:"mm_dst_node"`
 	SrcAddr      string   `yaml:"mm_src_addr" mapstructure:"mm_src_addr"`
-	VRF          int32    `yaml:"vrf" mapstructure:"vrf"`
+	VRF          int32    `yaml:"table" mapstructure:"table"`
 	TransitNodes []string `yaml:"transit_nodes" mapstructure:"transit_nodes"`
 }
 

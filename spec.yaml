@@ -1,122 +1,121 @@
-#preinit:
-#  - cmds:
-#    - cmd: make build-controller
-#    - cmd: make build-agent
-
-# TODO: controllerにはmysqlを入れる
-# TODO: v4アドレス付与する
+preinit:
+  - cmds:
+    - cmd: make docker-build-controller
+    - cmd: make docker-build-agent
 
 nodes:
-  - name: Con
+  - name: controller
     image: yykzm/ubuntu:20.04-controller
     interfaces:
       - { name: net0, type: direct, args: Bridge#net0 }
-  - name: Com1
+  - name: compute1
     image: yykzm/ubuntu:20.04-agent
     interfaces:
       - { name: net0, type: direct, args: Bridge#net1 }
-  - name: Com2
+  - name: compute2
     image: yykzm/ubuntu:20.04-agent
     interfaces:
       - { name: net0, type: direct, args: Bridge#net2  }
-  - name: Com3
+  - name: compute3
     image: yykzm/ubuntu:20.04-agent
     interfaces:
       - { name: net0, type: direct, args: Bridge#net3 }
-  - name: Com4
+  - name: compute4
     image: yykzm/ubuntu:20.04-agent
     interfaces:
       - { name: net0, type: direct, args: Bridge#net4 }
 
   - name: Bridge
-    image: slankdev/ubuntu:20.04
+    image: slankdev/ubuntu:18.04
     interfaces:
-      - { name: net0, type: direct, args: Con#net0 } 
-      - { name: net1, type: direct, args: Com1#net0 } 
-      - { name: net2, type: direct, args: Com2#net0 } 
-      - { name: net3, type: direct, args: Com3#net0 } 
-      - { name: net4, type: direct, args: Com4#net0 } 
+      - { name: net0, type: direct, args: controller#net0 } 
+      - { name: net1, type: direct, args: compute1#net0 } 
+      - { name: net2, type: direct, args: compute2#net0 } 
+      - { name: net3, type: direct, args: compute3#net0 } 
+      - { name: net4, type: direct, args: compute4#net0 } 
 
 node_configs:
-  - name: Con
+  - name: controller
     cmds:
       - cmd: bash -c "enable_seg6_router.py | sh"
       - cmd: echo "----------------------------------------"
-      - cmd: ip addr add fd00:0:172:16:ffff::ffff/64 dev net0
+      - cmd: ip addr add fd00:0:172:16:2::3/64 dev net0
+      - cmd: ip addr add 172.16.2.3/16 dev net0
+
+      - cmd: bash -c 'echo "172.16.2.3  controller" >> /etc/hosts'
+      - cmd: bash -c 'echo "172.16.2.4  compute1" >> /etc/hosts'
+      - cmd: bash -c 'echo "172.16.4.11 compute2" >> /etc/hosts'
+      - cmd: bash -c 'echo "172.16.4.12 compute3" >> /etc/hosts'
+      - cmd: bash -c 'echo "172.16.5.11 compute4" >> /etc/hosts'
+
+      - cmd: sed -i -e 's/127.0.0.1/172.16.2.3/g' /etc/mysql/mariadb.conf.d/50-server.cnf 
 
       - cmd: ip route add fc00:1::/64 via fd00:0:172:16:2::4
       - cmd: ip route add fc00:2::/64 via fd00:0:172:16:4::11 
       - cmd: ip route add fc00:3::/64 via fd00:0:172:16:4::12 
       - cmd: ip route add fc00:4::/64 via fd00:0:172:16:5::11 
+      # - cmd: mysql_secure_installation
 
-      - cmd: service start mysql
-      - cmd: mysql_secure_installation
-      # MariaDB [(none)]> CREATE DATABASE enrd;
-      # MariaDB [(none)]> GRANT ALL PRIVILEGES ON enrd.* TO 'enrd'@'localhost' IDENTIFIED BY 'password';
-      # MariaDB [(none)]> GRANT ALL PRIVILEGES ON enrd.* TO 'enrd'@'%' IDENTIFIED BY 'password';
-
-  - name: Com1
+  - name: compute1
     cmds:
       - cmd: bash -c "enable_seg6_router.py | sh"
       - cmd: echo "----------------------------------------"
       - cmd: ip addr add fd00:0:172:16:2::4/64 dev net0
-      - cmd: ip addr add fc00:1::/64 dev lo
+      - cmd: ip addr add 172.16.2.4/16 dev net0
+
+      - cmd: bash -c 'echo "172.16.2.3  controller" >> /etc/hosts'
     
      # - cmd: ip route add fc00:1::/64 via fd00:0:172:16:2::4
       - cmd: ip route add fc00:2::/64 via fd00:0:172:16:4::11 
       - cmd: ip route add fc00:3::/64 via fd00:0:172:16:4::12 
       - cmd: ip route add fc00:4::/64 via fd00:0:172:16:5::11 
       
-      - cmd: ip addr add 172.16.2.4/16 dev net0
-      - cmd: ip route add fc00:1::/128 encap seg6local action End dev net0
-
-  - name: Com2
+  - name: compute2
     cmds:
       - cmd: bash -c "enable_seg6_router.py | sh"
       - cmd: echo "----------------------------------------"
       - cmd: ip addr add fd00:0:172:16:4::11/64 dev net0
-      - cmd: ip addr add fc00:2::/64 dev lo
+      - cmd: ip addr add 172.16.4.11/16 dev net0
+
+      - cmd: bash -c 'echo "172.16.2.3  controller" >> /etc/hosts'
 
       - cmd: ip route add fc00:1::/64 via fd00:0:172:16:2::4
       #- cmd: ip route add fc00:2::/64 via fd00:0:172:16:4::11 
       - cmd: ip route add fc00:3::/64 via fd00:0:172:16:4::12 
       - cmd: ip route add fc00:4::/64 via fd00:0:172:16:5::11 
       
-      - cmd: ip addr add 172.16.4.11/16 dev net0
-      - cmd: ip route add fc00:2::/128 encap seg6local action End dev net0
-
-  - name: Com3
+  - name: compute3
     cmds:
       - cmd: bash -c "enable_seg6_router.py | sh"
       - cmd: echo "----------------------------------------"
       - cmd: ip addr add fd00:0:172:16:4::12/64 dev net0
-      - cmd: ip addr add fc00:3::/64 dev lo
+      - cmd: ip addr add 172.16.4.12/16 dev net0
+
+      - cmd: bash -c 'echo "172.16.2.3  controller" >> /etc/hosts'
+
 
       - cmd: ip route add fc00:1::/64 via fd00:0:172:16:2::4
       - cmd: ip route add fc00:2::/64 via fd00:0:172:16:4::11 
       #- cmd: ip route add fc00:3::/64 via fd00:0:172:16:4::12 
       - cmd: ip route add fc00:4::/64 via fd00:0:172:16:5::11
 
-      - cmd: ip addr add 172.16.4.12/16 dev net0
-      - cmd: ip route add fc00:3::/128 encap seg6local action End dev net0
-
-  - name: Com4
+  - name: compute4
     cmds:
       - cmd: bash -c "enable_seg6_router.py | sh"
       - cmd: echo "----------------------------------------"
       - cmd: ip addr add fd00:0:172:16:5::11/64 dev net0
-      - cmd: ip addr add fc00:4::0/64 dev lo
+      - cmd: ip addr add 172.16.5.11/16 dev net0
+
+      - cmd: bash -c 'echo "172.16.2.3  controller" >> /etc/hosts'
 
       - cmd: ip route add fc00:1::/64 via fd00:0:172:16:2::4
       - cmd: ip route add fc00:2::/64 via fd00:0:172:16:4::11 
       - cmd: ip route add fc00:3::/64 via fd00:0:172:16:4::12 
       #- cmd: ip route add fc00:4::/64 via fd00:0:172:16:5::11
       
-      - cmd: ip addr add 172.16.5.11/16 dev net0
-      - cmd: ip route add fc00:4::/128 encap seg6local action End dev net0
-
   - name: Bridge
     cmds:
+      - cmd: bash -c "enable_seg6_router.py | sh"
       - cmd: echo "----------------------------------------"
       - cmd: ip link add br0 type bridge
       - cmd: ip link set br0 up
@@ -125,15 +124,11 @@ node_configs:
       - cmd: ip link set net2 master br0
       - cmd: ip link set net3 master br0
       - cmd: ip link set net4 master br0
-      - cmd: sysctl -w net.ipv4.ip_forward=1
 
 test:
   - name: tc
     cmds:
-      # 50kb = 100mbit / 250
-      # 50000 = (100000000 / 8) / 250 
       # br-br
-      #- cmd: docker exec Bridge tc qdisc add dev br0 root bfifo limit 0.8mbit 
       - cmd: docker exec Bridge tc qdisc add dev br0 root tbf rate 100mbit burst 50kb limit 500kb
       # br-net
       - cmd: docker exec Bridge tc qdisc add dev net1 root tbf rate 100mbit burst 50kb limit 500kb
@@ -142,36 +137,7 @@ test:
       - cmd: docker exec Bridge tc qdisc add dev net4 root tbf rate 100mbit burst 50kb limit 500kb
       - cmd: docker exec Bridge tc qdisc add dev net0 root tbf rate 100mbit burst 50kb limit 500kb
       # host-net
-      - cmd: docker exec Com1 tc qdisc add dev net0 root tbf rate 100mbit burst 50kb limit 500kb
-      - cmd: docker exec Com2 tc qdisc add dev net0 root tbf rate 100mbit burst 50kb limit 500kb
-      - cmd: docker exec Com3 tc qdisc add dev net0 root tbf rate 100mbit burst 50kb limit 500kb
-      - cmd: docker exec Com4 tc qdisc add dev net0 root tbf rate 100mbit burst 50kb limit 500kb
-  - name: conf
-    cmds:
-      # パスの数分アドレスを追加する必要あり
-      - cmd: docker exec Com1 ip addr add fd00:0:172:16:ffff::1/64 dev net0
-      - cmd: docker exec Com1 ip addr add fd00:0:172:16:ffff::2/64 dev net0 
-      - cmd: docker exec Com1 ip addr add fd00:0:172:16:ffff::3/64 dev net0 
-      - cmd: docker exec Com1 ip addr add fd00:0:172:16:ffff::4/64 dev net0 
-      - cmd: docker exec Com1 ip addr add fd00:0:172:16:ffff::5/64 dev net0 
-      # 計測したいパスごとにVRFを用意
-      - cmd: docker exec Com1 bash -c "echo 100 blue >> /etc/iproute2/rt_tables"
-      - cmd: docker exec Com1 bash -c "echo 101 green >> /etc/iproute2/rt_tables"
-      - cmd: docker exec Com1 bash -c "echo 102 red >> /etc/iproute2/rt_tables"
-      - cmd: docker exec Com1 bash -c "echo 103 yellow >> /etc/iproute2/rt_tables"
-      - cmd: docker exec Com1 bash -c "echo 104 purple >> /etc/iproute2/rt_tables"
-      # fromでVRF
-      - cmd: docker exec Com1 ip -6 rule add from fd00:0:172:16:ffff::1 table blue 
-      - cmd: docker exec Com1 ip -6 rule add from fd00:0:172:16:ffff::2 table green
-      - cmd: docker exec Com1 ip -6 rule add from fd00:0:172:16:ffff::3 table red 
-      - cmd: docker exec Com1 ip -6 rule add from fd00:0:172:16:ffff::4 table yellow
-      - cmd: docker exec Com1 ip -6 rule add from fd00:0:172:16:ffff::5 table purple
-      # VRFごとにencapルールを変える
-      - cmd: docker exec Com1 ip route add fc00:4::/64 encap seg6 mode encap segs fc00:2::0 dev net0 table blue
-      - cmd: docker exec Com1 ip route add fc00:4::/64 encap seg6 mode encap segs fc00:2::0,fc00:3::0 dev net0 table green
-      - cmd: docker exec Com1 ip route add fc00:4::/64 encap seg6 mode encap segs fc00:2::0,fc00:3::0,fc00:5::0 dev net0 table red
-      - cmd: docker exec Com1 ip route add fc00:4::/64 encap seg6 mode encap segs fc00:2::0,fc00:3::0,fc00:5::0,fc00:6::0 dev net0 table yellow
-      - cmd: docker exec Com1 ip route add fc00:4::/64 encap seg6 mode encap segs fc00:2::0,fc00:3::0,fc00:5::0,fc00:6::0,fc00:7::0 dev net0 table purple
-  - name: pcap
-    cmds:
-      - cmd: docker exec Bridge tcpdump -i br0 -w /var/br0.pcap &
+      - cmd: docker exec compute1 tc qdisc add dev net0 root tbf rate 100mbit burst 50kb limit 500kb
+      - cmd: docker exec compute2 tc qdisc add dev net0 root tbf rate 100mbit burst 50kb limit 500kb
+      - cmd: docker exec compute3 tc qdisc add dev net0 root tbf rate 100mbit burst 50kb limit 500kb
+      - cmd: docker exec compute4 tc qdisc add dev net0 root tbf rate 100mbit burst 50kb limit 500kb

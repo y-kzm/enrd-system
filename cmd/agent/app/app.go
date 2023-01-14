@@ -18,7 +18,7 @@ import (
 	meas_client "github.com/y-kzm/enrd-system/pkg/tool/client"
 )
 
-const database = "enrd:0ta29SourC3@tcp(controller:3306)/enrd"
+const database = "enrd:PASSWORD@tcp(controller:3306)/enrd"
 
 var (
 	Nic    string
@@ -34,6 +34,7 @@ type Server struct {
 	api.UnimplementedServiceServer
 }
 
+// TODO: DBにデータ数カラムを追加して同期を容易に
 var Number = map[string]int{}
 
 // Recieve Configure message
@@ -296,6 +297,7 @@ func CreateVRF(vrf int32, src string) error {
  */
 func SEG6EncapRouteAdd(dst string, vrf int32, dev string, sidlist []string) error {
 	var sidList []net.IP
+	//sidList :=  make([]net.IP, len(sidlist), len(sidlist) * 2)
 
 	seg6encap := &netlink.SEG6Encap{Mode: nl.SEG6_IPTUN_MODE_ENCAP}
 	for _, sid := range sidlist {
@@ -304,9 +306,17 @@ func SEG6EncapRouteAdd(dst string, vrf int32, dev string, sidlist []string) erro
 			return err
 		}
 		sidList = append(sidList, ip)
-
 	}
-	seg6encap.Segments = sidList
+
+	if len(sidList) != 1 {
+		for i := len(sidList) - 1; i >= 0; i-- {
+			seg6encap.Segments = append(seg6encap.Segments, sidList[i])
+		}
+	} else {
+		seg6encap.Segments = sidList
+	}
+	//seg6encap.Segments = sidList
+	//log.Println(seg6encap.Segments)
 
 	link, err := netlink.LinkByName(dev)
 	if err != nil {

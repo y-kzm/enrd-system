@@ -1,0 +1,38 @@
+FROM ubuntu:20.04
+USER root
+
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt update \
+ && apt install -y apt-utils iproute2 iputils-ping net-tools \
+    build-essential iperf3 traceroute openvswitch-switch openvswitch-common \
+    vim git pppoe pppoeconf lldpd ethtool iptables \
+    telnet sudo iputils-ping netcat-openbsd curl tzdata wget protobuf-compiler
+
+RUN apt update && apt -y install tcpdump \
+ && mv /usr/sbin/tcpdump /usr/bin/tcpdump
+
+WORKDIR /temp
+RUN wget https://dl.google.com/go/go1.19.3.linux-amd64.tar.gz \
+ && tar -C /usr/local -xzf go1.19.3.linux-amd64.tar.gz \
+ && echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+
+WORKDIR $GOPATH
+
+# ref: https://github.com/slankdev/Dockerfiles/tree/master/ubuntu/18.04
+ADD ./docker/enable_seg6_router.py /usr/bin/enable_seg6_router.py
+ADD ./docker/disable_seg6_router.py /usr/bin/disable_seg6_router.py
+RUN chmod +x /usr/bin/enable_seg6_router.py
+RUN chmod +x /usr/bin/disable_seg6_router.py
+
+COPY ./ /go/enrd
+
+WORKDIR /go/enrd
+RUN make agent
+
+CMD ["/bin/bash"]

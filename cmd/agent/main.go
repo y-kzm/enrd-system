@@ -53,7 +53,7 @@ func main() {
 
 	// Startup of IGI/PTR server
 	go meas_server.EstimateServer()
-	log.Print("Startup of IGI/PTR server")
+	log.Print("IGI/PTR Server")
 
 	// Startup of gRPC server
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
